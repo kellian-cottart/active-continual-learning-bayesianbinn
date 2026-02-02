@@ -1,0 +1,66 @@
+{
+    "network": "bayesianmlp",
+    "network_params": {
+        "layers": [
+            8192,
+            19
+        ],
+        "activation_fn": "relu",
+        "active_learning": {
+            "mode": 0,
+            "threshold": 0.056,
+            "samples": 10
+        }
+    },
+    "optimizer": "mesu",
+    "optimizer_params": {
+        "lr_mu": 60.16,
+        "lr_sigma": 2.95,
+        "mu_prior": 0,
+        "sigma_prior": 0.36,
+        "N": 328000,
+        "clamp_grad": 0.7
+    },
+    "task": "openloris",
+    "task_params": {
+        "unbalanced": {
+            "n_min": 0,
+            "threshold_max": 700,
+            "remove_ratio_min": 0.5,
+            "remove_ratio_max": 0.8
+        },
+        "subfeatures": 8192,
+        "validation": true,
+        "dataset_normalisation": "none",
+        "feature_extraction": true,
+        "feature_extractor": "vgg19",
+        "classes": [
+            "bottle",
+            "bowl",
+            "corkscrew",
+            "cottonswab",
+            "cup",
+            "cushion",
+            "glasses",
+            "knife",
+            "ladle",
+            "mask",
+            "paper_cutter",
+            "pencil",
+            "plasticbag",
+            "plug",
+            "pot",
+            "scissors",
+            "stapler",
+            "thermometer",
+            "toy"
+        ]
+    },
+    "n_tasks": 12,
+    "epochs": 1,
+    "seed": 1000,
+    "n_train_samples": 10,
+    "n_test_samples": 10,
+    "train_batch_size": 1,
+    "test_batch_size": 4
+}

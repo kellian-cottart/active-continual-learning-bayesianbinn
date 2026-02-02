@@ -1,0 +1,28 @@
+{
+  "network": "bayesbinnmlp",
+  "network_params": {
+    "layers": [784, 100, 10],
+    "temperature": 1,
+    "activation_fn": "reversebinarygate",
+    "activation_params": {
+      "width": 1
+    }
+  },
+  "optimizer": "bayesbinn",
+  "optimizer_params": {
+    "lr": 0.77,
+    "prior_strength": 1.25e-5
+  },
+  "task": "permutedmnist",
+  "task_params": {
+    "dataset_normalisation": "standardised"
+  },
+  "n_tasks": 100,
+  "epochs": 1,
+  "train_batch_size": 1,
+  "test_batch_size": 500,
+  "seed": 0,
+  "n_train_samples": 5,
+  "n_test_samples": 5,
+  "max_parallel_permutation": 50
+}

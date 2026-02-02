@@ -1,0 +1,49 @@
+{
+  "network": "binarymlp",
+  "network_params": {
+    "layers": [8192, 18],
+    "activation_fn": "sign",
+    "activation_params": {
+      "offset": 0
+    }
+  },
+  "optimizer": "synapticmetaplasticity",
+  "optimizer_params": {
+    "lr": 0.0006,
+    "metaplasticity": 6,
+    "weight_decay": 6.4e-12
+  },
+  "task": "openloris",
+  "task_params": {
+    "subfeatures": 8192,
+    "dataset_normalisation": "none",
+    "feature_extraction": true,
+    "feature_extractor": "vgg19",
+    "classes": [
+      "bottle",
+      "bowl",
+      "corkscrew",
+      "cottonswab",
+      "pencil",
+      "cushion",
+      "glasses",
+      "ladle",
+      "mask",
+      "knife",
+      "paper_cutter",
+      "cup",
+      "plug",
+      "pot",
+      "scissors",
+      "stapler",
+      "thermometer",
+      "plasticbag"
+    ],
+    "ood_classes": ["toy"]
+  },
+  "n_tasks": 12,
+  "epochs": 1,
+  "seed": 1000,
+  "train_batch_size": 1,
+  "test_batch_size": 4
+}

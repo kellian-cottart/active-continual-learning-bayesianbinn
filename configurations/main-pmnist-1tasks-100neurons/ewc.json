@@ -1,0 +1,25 @@
+{
+  "network": "mlp",
+  "network_params": {
+    "layers": [784, 100, 10],
+    "activation_fn": "relu"
+  },
+  "optimizer": "sgd",
+  "optimizer_params": {
+    "lr": 0.003
+  },
+  "online-ewc": {
+    "importance": 0.11,
+    "downweighting": 1.0
+  },
+  "task": "permutedmnist",
+  "task_params": {
+    "dataset_normalisation": "standardised"
+  },
+  "n_tasks": 1,
+  "epochs": 1,
+  "train_batch_size": 1,
+  "test_batch_size": 100,
+  "seed": 0,
+  "max_parallel_permutation": 100
+}

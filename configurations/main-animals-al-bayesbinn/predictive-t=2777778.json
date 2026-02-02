@@ -1,0 +1,38 @@
+{
+  "network": "bayesbinnmlp",
+  "network_params": {
+    "layers": [25088, 20],
+    "temperature": 1.0,
+    "activation_fn": "reversebinarygate",
+    "activation_params": {
+      "width": 1
+    },
+    "active_learning": {
+      "mode": 2,
+      "threshold": 2.777778,
+      "samples": 10
+    }
+  },
+  "optimizer": "bayesbinn_al",
+  "optimizer_params": {
+    "lr": 0.22,
+    "prior_strength": 2.2e-7
+  },
+  "task": "animals",
+  "task_params": {
+    "dataset_normalisation": "none",
+    "feature_extractor": "vgg19",
+    "unbalanced": {
+      "threshold_max": 200
+    }
+  },
+  "n_tasks": 1,
+  "epochs": 1,
+  "n_splits_per_epoch": 1,
+  "max_parallel_permutation": 100,
+  "train_batch_size": 1,
+  "test_batch_size": 100,
+  "seed": 0,
+  "n_train_samples": 10,
+  "n_test_samples": 10
+}

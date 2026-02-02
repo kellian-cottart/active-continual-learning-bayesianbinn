@@ -1,0 +1,53 @@
+{
+  "network": "binarybayesianmlp",
+  "network_params": {
+    "layers": [25088, 18],
+    "temperature": 1,
+    "activation_fn": "reversebinarygate",
+    "activation_params": {
+      "width": 1
+    }
+  },
+  "optimizer": "bimu",
+  "optimizer_params": {
+    "likelihood_multiplier": 164.9,
+    "kl_multiplier": 0.156,
+    "lr_max": 0.06,
+    "N": 6900,
+    "lr": 2.16
+  },
+  "task": "openloris",
+  "task_params": {
+    "dataset_normalisation": "none",
+    "feature_extraction": true,
+    "feature_extractor": "vgg19",
+    "classes": [
+      "bottle",
+      "bowl",
+      "corkscrew",
+      "cottonswab",
+      "pencil",
+      "cushion",
+      "glasses",
+      "ladle",
+      "mask",
+      "knife",
+      "paper_cutter",
+      "cup",
+      "plug",
+      "pot",
+      "scissors",
+      "stapler",
+      "thermometer",
+      "plasticbag"
+    ],
+    "ood_classes": ["toy"]
+  },
+  "n_tasks": 12,
+  "epochs": 1,
+  "seed": 1000,
+  "n_train_samples": 10,
+  "n_test_samples": 10,
+  "train_batch_size": 1,
+  "test_batch_size": 4
+}

@@ -1,0 +1,38 @@
+{
+    "network": "bayesianmlp",
+    "network_params": {
+        "layers": [
+            25088,
+            20
+        ],
+        "activation_fn": "relu",
+        "active_learning": {
+            "mode": 4,
+            "reduction_factor": 0.99
+        }
+    },
+    "optimizer": "mesu",
+    "optimizer_params": {
+        "lr_mu": 65.6,
+        "lr_sigma": 4.7,
+        "sigma_prior": 0.86,
+        "N": 397000,
+        "clamp_grad": 0.41
+    },
+    "task": "animals",
+    "task_params": {
+        "dataset_normalisation": "standardised",
+        "feature_extractor": "vgg19",
+        "unbalanced": {
+            "threshold_max": 200
+        }
+    },
+    "n_tasks": 1,
+    "epochs": 1,
+    "n_splits_per_epoch": 1,
+    "train_batch_size": 1,
+    "test_batch_size": 100,
+    "seed": 0,
+    "n_train_samples": 10,
+    "n_test_samples": 10
+}

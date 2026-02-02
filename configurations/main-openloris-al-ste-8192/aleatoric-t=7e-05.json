@@ -1,0 +1,60 @@
+{
+    "network": "binarymlp",
+    "network_params": {
+        "layers": [
+            8192,
+            19
+        ],
+        "activation_fn": "sign",
+        "active_learning": {
+            "mode": 1,
+            "threshold": 7e-05,
+            "samples": 0
+        }
+    },
+    "optimizer": "adamw",
+    "optimizer_params": {
+        "learning_rate": 0.005,
+        "weight_decay": 5e-07
+    },
+    "task": "openloris",
+    "task_params": {
+        "unbalanced": {
+            "n_min": 0,
+            "threshold_max": 700,
+            "remove_ratio_min": 0.5,
+            "remove_ratio_max": 0.8
+        },
+        "subfeatures": 8192,
+        "validation": true,
+        "dataset_normalisation": "none",
+        "feature_extraction": true,
+        "feature_extractor": "vgg19",
+        "classes": [
+            "bottle",
+            "bowl",
+            "corkscrew",
+            "cottonswab",
+            "cup",
+            "cushion",
+            "glasses",
+            "knife",
+            "ladle",
+            "mask",
+            "paper_cutter",
+            "pencil",
+            "plasticbag",
+            "plug",
+            "pot",
+            "scissors",
+            "stapler",
+            "thermometer",
+            "toy"
+        ]
+    },
+    "n_tasks": 12,
+    "epochs": 1,
+    "seed": 1000,
+    "train_batch_size": 1,
+    "test_batch_size": 4
+}

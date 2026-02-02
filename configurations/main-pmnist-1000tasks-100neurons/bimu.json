@@ -1,0 +1,28 @@
+{
+  "network": "binarybayesianmlp",
+  "network_params": {
+    "layers": [784, 100, 10],
+    "temperature": 1,
+    "activation_fn": "reversebinarygate"
+  },
+  "optimizer": "bimu",
+  "optimizer_params": {
+    "likelihood_multiplier": 161.3,
+    "kl_multiplier": 3.76,
+    "lr_max": 0.0023,
+    "N": 700,
+    "lr": 4.9
+  },
+  "task": "permutedmnist",
+  "task_params": {
+    "dataset_normalisation": "standardised"
+  },
+  "n_tasks": 1000,
+  "epochs": 1,
+  "max_parallel_permutation": 50,
+  "train_batch_size": 1,
+  "test_batch_size": 500,
+  "seed": 0,
+  "n_train_samples": 5,
+  "n_test_samples": 5
+}

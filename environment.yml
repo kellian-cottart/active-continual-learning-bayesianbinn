@@ -1,0 +1,21 @@
+name: binarized
+channels:
+  - nvidia
+  - defaults
+dependencies:
+  - python=3.12
+  - matplotlib
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu128
+      - torch==2.9.1+cu128
+      - torchvision
+      - idx2numpy
+      - tqdm
+      - jax[cuda12]
+      - jaxlib
+      - equinox
+      - optax
+      - seaborn
+      - gdown
+      - datasets

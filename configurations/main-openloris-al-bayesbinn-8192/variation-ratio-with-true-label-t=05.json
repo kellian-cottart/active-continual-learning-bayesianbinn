@@ -1,0 +1,62 @@
+{
+  "network": "bayesbinnmlp",
+  "network_params": {
+    "layers": [8192, 19],
+    "temperature": 1,
+    "activation_fn": "reversebinarygate",
+    "activation_params": {
+      "width": 1
+    },
+    "active_learning": {
+      "mode": 5,
+      "threshold": 0.5,
+      "samples": 10
+    }
+  },
+  "optimizer": "bayesbinn_al",
+  "optimizer_params": {
+    "lr": 0.066,
+    "prior_strength": 4.6e-5
+  },
+  "task": "openloris",
+  "task_params": {
+    "unbalanced": {
+      "n_min": 0,
+      "threshold_max": 700,
+      "remove_ratio_min": 0.5,
+      "remove_ratio_max": 0.8
+    },
+    "subfeatures": 8192,
+    "dataset_normalisation": "none",
+    "feature_extraction": true,
+    "feature_extractor": "vgg19",
+    "classes": [
+      "bottle",
+      "bowl",
+      "corkscrew",
+      "cottonswab",
+      "cup",
+      "cushion",
+      "glasses",
+      "knife",
+      "ladle",
+      "mask",
+      "paper_cutter",
+      "pencil",
+      "plasticbag",
+      "plug",
+      "pot",
+      "scissors",
+      "stapler",
+      "thermometer",
+      "toy"
+    ]
+  },
+  "n_tasks": 12,
+  "epochs": 1,
+  "seed": 1000,
+  "n_train_samples": 10,
+  "n_test_samples": 10,
+  "train_batch_size": 1,
+  "test_batch_size": 4
+}

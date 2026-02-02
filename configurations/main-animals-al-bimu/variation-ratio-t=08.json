@@ -1,0 +1,41 @@
+{
+    "network": "binarybayesianmlp",
+    "network_params": {
+        "layers": [
+            25088,
+            20
+        ],
+        "temperature": 1,
+        "activation_fn": "reversebinarygate",
+        "active_learning": {
+            "mode": 3,
+            "threshold": 0.8,
+            "samples": 10
+        }
+    },
+    "optimizer": "bimu",
+    "optimizer_params": {
+        "likelihood_multiplier": 14,
+        "kl_multiplier": 0.16,
+        "lr_max": 0.054,
+        "N": 4600,
+        "lr": 5.8
+    },
+    "task": "animals",
+    "task_params": {
+        "dataset_normalisation": "none",
+        "feature_extractor": "vgg19",
+        "unbalanced": {
+            "threshold_max": 200
+        }
+    },
+    "n_tasks": 1,
+    "epochs": 1,
+    "n_splits_per_epoch": 1,
+    "max_parallel_permutation": 100,
+    "train_batch_size": 1,
+    "test_batch_size": 100,
+    "seed": 0,
+    "n_train_samples": 10,
+    "n_test_samples": 10
+}

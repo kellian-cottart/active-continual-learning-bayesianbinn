@@ -1,0 +1,44 @@
+{
+  "network": "mlp",
+  "network_params": {
+    "layers": [25088, 18],
+    "activation_fn": "relu"
+  },
+  "optimizer": "adamw",
+  "optimizer_params": {
+    "learning_rate": 0.6,
+    "weight_decay": 1.1e-8
+  },
+  "task": "openloris",
+  "task_params": {
+    "dataset_normalisation": "none",
+    "feature_extraction": true,
+    "feature_extractor": "vgg19",
+    "classes": [
+      "bottle",
+      "bowl",
+      "corkscrew",
+      "cottonswab",
+      "pencil",
+      "cushion",
+      "glasses",
+      "ladle",
+      "mask",
+      "knife",
+      "paper_cutter",
+      "cup",
+      "plug",
+      "pot",
+      "scissors",
+      "stapler",
+      "thermometer",
+      "plasticbag"
+    ],
+    "ood_classes": ["toy"]
+  },
+  "n_tasks": 12,
+  "epochs": 1,
+  "seed": 1000,
+  "train_batch_size": 1,
+  "test_batch_size": 100
+}

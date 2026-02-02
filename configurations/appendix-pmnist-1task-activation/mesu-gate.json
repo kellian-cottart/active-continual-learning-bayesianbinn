@@ -1,0 +1,30 @@
+{
+  "network": "bayesianmlp",
+  "network_params": {
+    "layers": [784, 100, 10],
+    "activation_fn": "reversebinarygate",
+    "activation_params": {
+      "width": 1
+    }
+  },
+  "optimizer": "mesu",
+  "optimizer_params": {
+    "lr_mu": 1.3,
+    "lr_sigma": 0.94,
+    "sigma_prior": 0.76,
+    "N": 1174000,
+    "clamp_grad": 0.21
+  },
+  "task": "permutedmnist",
+  "task_params": {
+    "dataset_normalisation": "standardised"
+  },
+  "n_train_samples": 10,
+  "n_test_samples": 10,
+  "n_tasks": 1,
+  "epochs": 1,
+  "train_batch_size": 1,
+  "test_batch_size": 200,
+  "seed": 0,
+  "max_parallel_permutation": 25
+}

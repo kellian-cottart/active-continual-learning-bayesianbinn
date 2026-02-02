@@ -1,0 +1,27 @@
+{
+  "network": "bayesianmlp",
+  "network_params": {
+    "layers": [784, 100, 10],
+    "activation_fn": "relu"
+  },
+  "optimizer": "mesu",
+  "optimizer_params": {
+    "lr_mu": 1.6,
+    "lr_sigma": 2.1,
+    "sigma_prior": 0.3,
+    "N": 600000,
+    "clamp_grad": 0.36
+  },
+  "task": "permutedmnist",
+  "task_params": {
+    "dataset_normalisation": "standardised"
+  },
+  "n_train_samples": 10,
+  "n_test_samples": 10,
+  "n_tasks": 100,
+  "epochs": 1,
+  "train_batch_size": 1,
+  "test_batch_size": 200,
+  "max_parallel_permutation": 25,
+  "seed": 0
+}
