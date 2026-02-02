@@ -126,7 +126,7 @@ The core of the project is the `main.py` file.
 
 ```bash
 python main.py \
-    --main-pmnist-1000tasks-100neurons \
+    --config main-pmnist-1000tasks-100neurons/bimu \
     --n_iterations 5 \
     --ood fashion \
     --gpu 0 \
@@ -137,7 +137,7 @@ python main.py \
 
 ## Reproducing Figures and Tables
 
-All figures and tables from the paper and appendix can be reproduced using the scripts in the `scripts/` folder.
+All figures and tables from the paper and appendix can be reproduced using the scripts in the `scripts/` folder. Then, use the corresponding Jupyter notebooks noted _appendix_ or _main_ to generate the plots and tables.
 
 ### Main Paper Results
 
