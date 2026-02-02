@@ -11,7 +11,10 @@ Main contributors:
 Research director:
 - [Damien QUERLIOZ](https://scholar.google.com/citations?user=2-EKdW4AAAAJ&hl=en)
 
+## Table of contents
+
 - [Active Continual Learning with Binarized Bayesian Neural Networks](#active-continual-learning-with-binarized-bayesian-neural-networks)
+  - [Table of contents](#table-of-contents)
   - [Environment Setup](#environment-setup)
   - [Project Structure](#project-structure)
   - [Main Training File (`main.py`)](#main-training-file-mainpy)
