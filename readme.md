@@ -144,7 +144,7 @@ All figures and tables from the paper and appendix can be reproduced using the s
 
 ### Main Paper Results
 
-* **PMNIST results**
+* **Permuted MNIST dataset**
 
   ```bash
   bash scripts/main-pmnist-table.sh
@@ -165,19 +165,19 @@ All figures and tables from the paper and appendix can be reproduced using the s
 
 ### Appendix Experiments
 
-* **PMNIST – Memory window N**
+* **Permuted MNIST – Memory window N**
 
   ```bash
   bash scripts/appendix-pmnist-table-N.sh
   ```
 
-* **PMNIST – Activation functions**
+* **Permuted MNIST – Activation functions**
 
   ```bash
   bash scripts/appendix-pmnist-table-activation.sh
   ```
 
-* **PMNIST – Model size**
+* **Permuted MNIST – Model size**
 
   ```bash
   bash scripts/appendix-pmnist-table-size.sh
