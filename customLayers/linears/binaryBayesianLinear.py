@@ -19,6 +19,7 @@ from equinox import Module, field
 from equinox import _misc
 from jax.random import split, uniform
 from equinox.nn import Linear
+from jax.numpy import int8, int32
 
 
 class BinaryBayesianLinear(Linear):
@@ -61,7 +62,7 @@ class BinaryBayesianLinear(Linear):
                                    minval=1e-10, maxval=1 - 1e-10)
             logit_epsilon_bias = log(epsilon_bias) - log(1 - epsilon_bias)
             biases = tanh(
-                (self.bias + 0.5 * logit_epsilon_bias) / self.temperature)
+                (self.bias + 0.5 * logit_epsilon_bias) / temperature)
             output += biases
         return output
 
@@ -76,3 +77,17 @@ class BinaryBayesianLinear(Linear):
             biases = 2 * bernoulli(bkey, p_bias).astype(float32) - 1
             output += biases
         return output
+
+    def sample_int8(self, x: Array, *, key: PRNGKeyArray, temperature: float = 1) -> Array:
+        wkey, bkey = split(key, 2)
+        p = logistic(2 * self.weight)
+        w = 2 * bernoulli(wkey, p).astype(int8) - 1
+        x = x.astype(int8)
+        out = dot(w, x)
+
+        if self.use_bias:
+            p_bias = logistic(2 * self.bias)
+            b = 2 * bernoulli(bkey, p_bias).astype(int8) - 1
+            out = out + b.astype(int8)
+
+        return out

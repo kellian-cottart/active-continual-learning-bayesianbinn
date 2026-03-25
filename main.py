@@ -276,11 +276,6 @@ if __name__ == "__main__":
             if OOD is not None:
                 ood_dataloader, ood_core_keys, rng = load_ood_dataset(
                     OOD, loader, task_params, configuration, num_classes, rng, FITS_IN_MEMORY)
-            # compute for each epoch in each task the time it takes to compute the training and testing
-            train_timing_array = jnp.zeros(
-                (configuration["n_tasks"], configuration["epochs"]))
-            test_timing_array = jnp.zeros(
-                (configuration["n_tasks"], configuration["epochs"]))
             n_splits_per_epoch = configuration.get("n_splits_per_epoch", 1)
 
             # ---------- Memory Occupation --------------
@@ -328,7 +323,6 @@ if __name__ == "__main__":
                     train_ck = training_core_keys[task_id, epoch]
                     test_ck = test_core_keys[task_id, epoch]
                     for split_epoch in split_epoch_pbar:
-                        start = time()
                         model, opt_state, losses, ewc_streaming_parameters, model_state, si_parameters = train_fn(
                             model=model,
                             dataset=split_train_dataloader[split_epoch],
@@ -343,14 +337,11 @@ if __name__ == "__main__":
                             si_parameters=si_parameters,
                             init_state=model_state
                         )
-                        train_timing_array = train_timing_array.at[task_id, epoch].set(
-                            time()-start)
                         if isinstance(model, BaseBinaryMLP):
                             # we need to save the normalization weights at the end of the epoch
                             new_params = model.return_tree_norm()
                             norm_params = map(lambda old, new: old.at[task_id].set(
                                 new), norm_params, new_params)
-                        start = time()
                         accuracies, uncertainties = main_test_fn(
                             test_dataset=test_dataloader,
                             num_classes=num_classes,
@@ -368,8 +359,6 @@ if __name__ == "__main__":
                         if "step" in opt_state:
                             current_iterations = opt_state["step"].item() if not isinstance(
                                 opt_state["step"], int) else opt_state["step"]
-                        test_timing_array = test_timing_array.at[task_id, epoch].set(
-                            time()-start)
                         if TRAIN_ACC:
                             tr_accuracies, tr_uncertainties = main_test_fn(
                                 test_dataset=train,
@@ -608,11 +597,6 @@ if __name__ == "__main__":
                 for i, leaf in enumerate(output_leaves):
                     with open(os.path.join(WEIGHTS_PATH, f"layer={i}.npy"), "wb") as f:
                         jnp.save(f, leaf)
-            # save the timing
-            np.save(os.path.join(CONFIGURATION_PATH, "train_timing.npy"),
-                    train_timing_array)
-            np.save(os.path.join(CONFIGURATION_PATH, "test_timing.npy"),
-                    test_timing_array)
             # save the number of iterations
             np.save(os.path.join(CONFIGURATION_PATH,
                     "iterations.npy"), current_iterations)
