@@ -5,7 +5,7 @@ This repository contains the code used for the experiments in **Active Continual
 Main contributors:
 
 - [Kellian COTTART](https://scholar.google.com/citations?hl=en&user=Akg-AH4AAAAJ)
-- [Théo Ballet](https://scholar.google.com/citations?user=WWfZoQcAAAAJ&hl=en)
+- [Théo BALLET](https://scholar.google.com/citations?user=WWfZoQcAAAAJ&hl=en)
 - [Djohan BONNET](https://scholar.google.com/citations?user=1cSwOPIAAAAJ&hl=en)
   
 Research director:
