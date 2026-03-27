@@ -36,7 +36,7 @@ def bimu(
         optax.GradientTransformation: The BHU update rule.
     """
     def init(params):
-        return {'step': 0}
+        return {'step': 0, 'seen': 0}
 
     def update(gradients, state, params=None):
         def update_bhu(param, grad):
@@ -56,5 +56,5 @@ def bimu(
         # if sum_grads is 0, then we don't want to update the parameters, we don't want forgetting,
         # hence updates must be 0
         updates = map(lambda x: x * sum_grads, updates)
-        return updates, {'step': state['step'] + sum_grads}
+        return updates, {'step': state['step'] + sum_grads, 'seen': state['seen'] + 1}
     return optax.GradientTransformation(init, update)

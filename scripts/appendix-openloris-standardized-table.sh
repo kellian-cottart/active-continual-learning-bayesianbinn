@@ -22,3 +22,5 @@ process_folders() {
 for folder in appendix-openloris-standardized; do
     process_folders "$folder"
 done
+
+wait

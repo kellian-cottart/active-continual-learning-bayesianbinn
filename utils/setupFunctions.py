@@ -40,6 +40,9 @@ def configure_networks(configuration, rng):
         "binarymlpbatchnorm": BinaryMLPBatchNorm,
         "binarymlplayernorm": BinaryMLPLayerNorm,
         "bayesbinnmlp": BaseBayesBiNNMLP,
+        "binarybayesianconvcifar100": BinaryBayesianCNNCifar100,
+        "binarybayesianconvmnist": BinaryBayesianCNNMNIST,
+        "binarybayesianconvcore50": BinaryBayesianCNNCore50,
     }
     if not "network_params" in configuration:
         raise ValueError("Network parameters 'network_params' not found")

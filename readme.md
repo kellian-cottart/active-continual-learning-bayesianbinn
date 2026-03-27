@@ -195,6 +195,12 @@ All figures and tables from the paper and appendix can be reproduced using the s
   bash scripts/appendix-openloris-al-variation-ratio.sh
   ```
 
+* **OpenLORIS – Variation ratio dynamic threshold**
+
+  ```bash
+  bash scripts/appendix-openloris-al-variation-threshold.sh
+  ```
+
 Each script launches a sequence of `main.py` runs with the appropriate configuration files and automatically stores the results.
 
 ## Notes
