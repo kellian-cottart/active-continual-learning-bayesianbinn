@@ -24,7 +24,7 @@ from utils.activeLearningFunctions import *
 
 
 @eqx.filter_jit
-def loss_fn(model, images, labels, samples=None, rng=None, ewc_online_parameters=None, ewc_streaming_parameters=None, ewc_parameters=None, si_parameters=None, init_state=None):
+def loss_fn(model, images, labels, samples=None, rng=None, ewc_online_parameters=None, ewc_streaming_parameters=None, ewc_parameters=None, si_parameters=None, init_state=None, opt_state=None):
     """Loss function for the model. Determines the appropriate loss function based on the provided parameters.
 
     Args:
@@ -44,7 +44,7 @@ def loss_fn(model, images, labels, samples=None, rng=None, ewc_online_parameters
     elif samples is not None:
         loss_fn_to_use = bayesian_loss_fn
         loss_args = (model, images, labels, samples,
-                     rng, init_state)
+                     rng, init_state, opt_state)
     elif any(param is not None for param in [ewc_online_parameters, ewc_streaming_parameters, ewc_parameters]):
         loss_fn_to_use = ewc_loss_fn
         ewc_params = ewc_online_parameters or ewc_streaming_parameters or ewc_parameters
@@ -173,7 +173,7 @@ def bayesbinn_loss_fn(model, images, labels, samples, rng, init_state=None):
 
 
 @eqx.filter_value_and_grad(has_aux=True)
-def bayesian_loss_fn(model, images, labels, samples, rng, init_state=None):
+def bayesian_loss_fn(model, images, labels, samples, rng, init_state=None, opt_state=None):
     """ Loss function for Bayesian models. """
     # Same rng for all images in the batch, but different for each sample
     predictions, state = jax.vmap(partial(model, backwards=True),
@@ -181,7 +181,7 @@ def bayesian_loss_fn(model, images, labels, samples, rng, init_state=None):
     mask = jnp.ones(labels.shape, dtype=bool)
     if hasattr(model, 'active_learning') and model.active_learning is not None:
         labels, predictions, mask = apply_active_learning_strategy(
-            model, images, labels, samples, rng, init_state, predictions)
+            model, images, labels, samples, rng, init_state, predictions, opt_state)
 
     output = jax.nn.log_softmax(
         predictions, axis=-1).mean(axis=1) * labels * mask
@@ -305,7 +305,7 @@ def batch_fn(dynamic_state, opt_state, keys, optimizer, images, labels, state, s
     # Combine dynamic and static parts of the model
     model = eqx.combine(dynamic_state, static_state)
     (loss, state), grads = loss_fn(
-        model, images, labels, samples, keys, ewc_online_parameters, ewc_streaming_parameters, ewc_parameters, si_parameters, state)
+        model, images, labels, samples, keys, ewc_online_parameters, ewc_streaming_parameters, ewc_parameters, si_parameters, state, opt_state)
     # Update the model using the optimizer
     dynamic_state = eqx.partition(model, eqx.is_array)[0]
     updates, opt_state = optimizer.update(grads, opt_state, dynamic_state)
