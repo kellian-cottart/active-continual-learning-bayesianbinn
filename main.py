@@ -289,8 +289,10 @@ if __name__ == "__main__":
                      "memory_occupation.npy"), memory_occupation)
 
             # ---------- Preparing Dataloaders --------------
+            data_augmentation = configuration["task_params"].get(
+                "data_augmentation", False)
             train = to_dataloader(
-                train, configuration["train_batch_size"], num_classes, fits_in_memory=FITS_IN_MEMORY)
+                train, configuration["train_batch_size"], num_classes, fits_in_memory=FITS_IN_MEMORY, augmentation=data_augmentation)
             test_dataloader = to_dataloader(
                 test, configuration["test_batch_size"], num_classes, fits_in_memory=FITS_IN_MEMORY)
 

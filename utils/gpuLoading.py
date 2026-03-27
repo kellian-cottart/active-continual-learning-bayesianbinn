@@ -19,7 +19,7 @@ import pickle
 import sys
 from tqdm import tqdm
 import hashlib
-from torch import tensor, load, save, cat, from_numpy, LongTensor, Tensor, no_grad, randperm, prod, ones, clip, zeros, zeros_like
+from torch import tensor, load, save, cat, from_numpy, LongTensor, Tensor, no_grad, randperm, prod, ones, clip, zeros, zeros_like, stack
 from torch.nn import AvgPool2d
 from torch.nn import Sequential
 from collections import Counter, defaultdict
@@ -328,6 +328,9 @@ class GPULoading:
         test_labels = cat(test_labels)
         return train_dataset, test_dataset
 
+    
+
+    
     def cifar10(self, iterations=10, *args, **kwargs):
         """ Load a local dataset on GPU corresponding to CIFAR10 """
         # Deal with the training data
@@ -381,12 +384,10 @@ class GPULoading:
                 dict = pickle.load(f, encoding='bytes')
             test_x = dict[b'data']
             test_y = dict[b'labels']
-            # Deflatten the data
-            train_x = train_x.reshape(-1, 3, 32, 32)
-            test_x = test_x.reshape(-1, 3, 32, 32)
             # Normalize and pad the data
-            train_x = normalisation(train_x, padding=self.padding)
-            test_x = normalisation(test_x, padding=self.padding)
+            dataset_normalisation = kwargs.get("dataset_normalisation", "none")
+            train_x = normalisation(train_x.reshape(-1, 3, 32, 32), dataset_normalisation=dataset_normalisation)
+            test_x = normalisation(test_x.reshape(-1, 3, 32, 32), dataset_normalisation=dataset_normalisation)
         return self.to_dataset(train_x, train_y, test_x, test_y)
 
     def cifar100(self, iterations=10, *args, **kwargs):
@@ -425,9 +426,6 @@ class GPULoading:
             test_x = test_x.reshape(-1, 3, 32, 32)
             train_y = fine_labels
             test_y = test_fine_labels
-            # Normalize and pad the data
-            train_x = normalisation(train_x, padding=self.padding)
-            test_x = normalisation(test_x, padding=self.padding)
         return self.to_dataset(train_x, train_y, test_x, test_y)
 
     def feature_extraction(self, folder, train_x, train_y, test_x, test_y, task="cifar100", iterations=10):

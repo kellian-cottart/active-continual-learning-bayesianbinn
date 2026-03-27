@@ -15,41 +15,106 @@ from torch.utils.data import TensorDataset, DataLoader, default_collate, Subset
 import numpy as np
 from jax.tree import map
 from torch import randperm
-
-
-def numpy_collate(batch):
-    return map(np.asarray, default_collate(batch))
-
-
-class NumpyLoader(DataLoader):
-    def __init__(self, dataset, batch_size=1,
-                 shuffle=False, sampler=None,
-                 batch_sampler=None, num_workers=0,
-                 pin_memory=False, drop_last=False,
-                 timeout=0, worker_init_fn=None):
-        super(self.__class__, self).__init__(dataset,
-                                             batch_size=batch_size,
-                                             shuffle=shuffle,
-                                             sampler=sampler,
-                                             batch_sampler=batch_sampler,
-                                             num_workers=num_workers,
-                                             collate_fn=numpy_collate,
-                                             pin_memory=pin_memory,
-                                             drop_last=drop_last,
-                                             timeout=timeout,
-                                             worker_init_fn=worker_init_fn)
-
-    # define subscript method to access the dataset
-    def __getitem__(self, index):
-        return self.dataset[index]
-
+from torchvision.transforms import v2
 
 class FlattenAndCast(object):
     def __call__(self, pic):
         return np.ravel(np.array(pic, dtype=jnp.float32))
 
+# Collate for numpy arrays
+def numpy_collate(batch):
+    return list(map(np.asarray, default_collate(batch)))
 
-def to_dataloader(data, batch_size, num_classes, fits_in_memory=True):
+# CIFAR strong augmentation (example)
+def build_cifar_augmentation():
+    return v2.Compose([
+        v2.RandomCrop(32, padding=4),
+        v2.RandomHorizontalFlip(),
+        v2.ToTensor(),
+        v2.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))
+    ])
+
+# CutMix function
+def cutmix(x, y, alpha=1.0):
+    lam = np.random.beta(alpha, alpha)
+    index = torch.randperm(x.size(0))
+
+    B, C, H, W = x.shape
+    cx, cy = np.random.randint(W), np.random.randint(H)
+    w = int(W * np.sqrt(1 - lam))
+    h = int(H * np.sqrt(1 - lam))
+
+    x1 = np.clip(cx - w // 2, 0, W)
+    x2 = np.clip(cx + w // 2, 0, W)
+    y1 = np.clip(cy - h // 2, 0, H)
+    y2 = np.clip(cy + h // 2, 0, H)
+
+    x[:, :, y1:y2, x1:x2] = x[index, :, y1:y2, x1:x2]
+
+    lam = 1 - ((x2 - x1) * (y2 - y1) / (W * H))
+    return x, y, y[index], lam
+
+# Custom DataLoader
+class NumpyLoader(DataLoader):
+    def __init__(self, dataset, batch_size=1,
+                 shuffle=False, sampler=None,
+                 batch_sampler=None, num_workers=0,
+                 pin_memory=False, drop_last=False,
+                 timeout=0, worker_init_fn=None,
+                 augment=False, cutmix_prob=0.5, cutmix_alpha=1.0):
+
+        self.augment = augment
+        self.cutmix_prob = cutmix_prob
+        self.cutmix_alpha = cutmix_alpha
+        self.transform = build_cifar_augmentation() if augment else None
+
+        super().__init__(
+            dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            sampler=sampler,
+            batch_sampler=batch_sampler,
+            num_workers=num_workers,
+            collate_fn=numpy_collate,
+            pin_memory=pin_memory,
+            drop_last=drop_last,
+            timeout=timeout,
+            worker_init_fn=worker_init_fn
+        )
+
+    def __getitem__(self, index):
+        x, y = self.dataset[index]
+
+        if self.transform is not None:
+            x = x.transpose(1, 2, 0)  # (C,H,W) -> (H,W,C)
+            x = self.transform(x)      # torch tensor (C,H,W)
+            x = x.numpy()              # back to numpy
+
+        return x, y
+
+    def __iter__(self):
+        for batch in super().__iter__():
+            images, labels = batch
+            images = np.stack([
+                self.transform(img.transpose(1, 2, 0)).numpy()
+                if self.augment else img
+                for img in images
+            ])
+
+            # Apply CutMix with probability
+            if self.augment and np.random.rand() < self.cutmix_prob:
+                images, labels, labels_shuffled, lam = cutmix(torch.tensor(images), torch.tensor(labels), self.cutmix_alpha)
+                # Convert back to numpy for consistency
+                images = images.numpy()
+                labels = (labels, labels_shuffled, lam)  # return tuple for loss computation
+
+            yield images, labels
+
+
+
+
+
+def to_dataloader(data, batch_size, num_classes, fits_in_memory=True, augmentation=False):
     loader = []
     if fits_in_memory:
         for dataset in data:
@@ -59,7 +124,7 @@ def to_dataloader(data, batch_size, num_classes, fits_in_memory=True):
     else:
         for dataset in data:
             dataloader = NumpyLoader(
-                dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+                dataset, batch_size=batch_size, shuffle=True, drop_last=True, augment=augmentation)
             loader.append(dataloader)
     return loader
 

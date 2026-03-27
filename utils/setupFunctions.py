@@ -43,6 +43,7 @@ def configure_networks(configuration, rng):
         "binarybayesianconvcifar100": BinaryBayesianCNNCifar100,
         "binarybayesianconvmnist": BinaryBayesianCNNMNIST,
         "binarybayesianconvcore50": BinaryBayesianCNNCore50,
+        "binarybayesianresnet": BinaryBayesianResNetCIFAR,
     }
     if not "network_params" in configuration:
         raise ValueError("Network parameters 'network_params' not found")
