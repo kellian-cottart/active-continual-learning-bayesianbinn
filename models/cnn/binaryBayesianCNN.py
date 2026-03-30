@@ -30,11 +30,12 @@ class BinaryBayesianCNNCifar100(BaseBinaryBayesianCNN):
                     padding="SAME",
                     use_bias=use_bias,
                 ))
-                self.layers.append(LayerNorm(
-                    shape=(out_ch, spatial_size, spatial_size),
-                    use_weight=False,
-                    use_bias=False,
-                ))
+                self.layers.append(BatchNorm(axis_name="batch",
+                    input_size=out_ch,
+                    channelwise_affine=False,
+                    momentum=0.1,
+                    eps=1e-5,
+                    inference=False,))
                 self.layers.append(activation_fn)
             
             # MaxPool after the block
@@ -55,11 +56,12 @@ class BinaryBayesianCNNCifar100(BaseBinaryBayesianCNN):
                 use_bias=use_bias,
                 key=keys[len(conv_blocks) + i]
             ))
-            self.layers.append(LayerNorm(
-                shape=(layers[i + 1],),
-                use_weight=False,
-                use_bias=False,
-            ))
+            self.layers.append(BatchNorm(axis_name="batch",
+                    input_size=layers[i + 1],
+                    channelwise_affine=False,
+                    momentum=0.1,
+                    eps=1e-5,
+                    inference=False,))
             if i < len(layers) - 2:
                 self.layers.append(activation_fn)
 

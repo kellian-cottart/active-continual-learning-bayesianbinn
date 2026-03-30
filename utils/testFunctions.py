@@ -124,7 +124,7 @@ def test_fn_bayesian(model, images, state, samples, rng):
 
 
 def test_fn_deterministic(model, images, state):
-    return jax.vmap(model, axis_name="batch", in_axes=(0, None), out_axes=(0, None))(images, state)
+    return jax.vmap(model, axis_name="batch", in_axes=(0, None, None), out_axes=(0, None))(images, state, None)
 
 
 @eqx.filter_jit

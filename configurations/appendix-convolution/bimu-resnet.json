@@ -1,17 +1,17 @@
 {
-  "network": "binarybayesianconvcifar100",
+  "network": "binarybayesianresnet",
   "network_params": {
-    "layers": [1024, 10],
+    "layers": [512, 10],
     "temperature": 1,
     "activation_fn": "sign"
   },
   "optimizer": "bimu",
   "optimizer_params": {
-    "likelihood_multiplier": 50,
-    "kl_multiplier": 1,
-    "lr_max": 0.01,
+    "likelihood_multiplier": 1,
+    "kl_multiplier": 0.22,
+    "lr_max": 0.09,
     "N": 20000,
-    "lr": 33
+    "lr": 0.01
   },
   "task": "cifar10",
   "task_params": {
@@ -22,7 +22,7 @@
   "seed": 1000,
   "n_train_samples": 1,
   "n_test_samples": 1,
-  "train_batch_size": 64,
+  "train_batch_size": 128,
   "test_batch_size": 512,
   "n_splits_per_epoch": 1
 }

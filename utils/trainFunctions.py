@@ -66,7 +66,8 @@ def si_loss_fn(model, images, labels, si_parameters, init_state=None):
     predictions, state = jax.vmap(model,
                                   axis_name="batch",
                                   in_axes=(0, None),
-                                  out_axes=(0, None))(images, init_state)
+                                  out_axes=(0, None)
+                                )(images, init_state)
     output = jax.nn.log_softmax(predictions, axis=-1) * labels
     difference_squared = map(
         lambda omega, new, old: omega * (new - old)**2,
@@ -175,9 +176,11 @@ def bayesbinn_loss_fn(model, images, labels, samples, rng, init_state=None):
 @eqx.filter_value_and_grad(has_aux=True)
 def bayesian_loss_fn(model, images, labels, samples, rng, init_state=None, opt_state=None):
     """ Loss function for Bayesian models. """
-    # Same rng for all images in the batch, but different for each sample
-    predictions, state = jax.vmap(partial(model, backwards=True),
-                                  in_axes=(0, None, None, None), out_axes=(0, None))(images, init_state, samples, rng)
+    # Same rng for all images in the batch, but different for each sample    
+    predictions, state = jax.vmap(partial(model, backwards=True), 
+                                  axis_name="batch", 
+                                  in_axes=(0, None, None, None), 
+                                  out_axes=(0, None))(images, init_state, samples, rng)
     mask = jnp.ones(labels.shape, dtype=bool)
     if hasattr(model, 'active_learning') and model.active_learning is not None:
         labels, predictions, mask = apply_active_learning_strategy(
@@ -192,8 +195,8 @@ def bayesian_loss_fn(model, images, labels, samples, rng, init_state=None, opt_s
 @eqx.filter_value_and_grad(has_aux=True)
 def deterministic_loss_fn(model, images, labels, rng, init_state=None):
     """ Loss function for deterministic models. """
-    predictions, state = jax.vmap(model, axis_name="batch",
-                                  in_axes=(0, None), out_axes=(0, None))(images, init_state)
+    predictions, state = jax.vmap(partial(model, backwards=True), axis_name="batch",
+                                  in_axes=(0, None, None), out_axes=(0, None))(images, init_state, rng) 
     predictions = jnp.expand_dims(predictions, 1)
     mask = jnp.ones(labels.shape, dtype=bool)
     if hasattr(model, 'active_learning') and model.active_learning is not None:
@@ -250,7 +253,6 @@ def dataloader_train_fn(model, dataset, num_classes, opt_state, optimizer, train
         updates, opt_state = optimizer.update(
             grads, opt_state, dynamic_state)
         dynamic_state = optax.apply_updates(dynamic_state, updates)
-
         if si_parameters is not None:
             si_parameters["w_k"] = map(
                 lambda w_k, grad, old, new: w_k - grad * (new-old),

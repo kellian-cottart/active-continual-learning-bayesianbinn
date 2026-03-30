@@ -1,0 +1,21 @@
+{
+  "network": "realconvcifar100",
+  "network_params": {
+    "layers": [1024, 1024, 10],
+    "activation_fn": "relu"
+  },
+  "optimizer": "adam",
+  "optimizer_params": {
+    "learning_rate": 0.001
+  },
+  "task": "cifar10",
+  "task_params": {
+    "dataset_normalisation": "None"
+  },
+  "n_tasks": 1,
+  "epochs": 100,
+  "seed": 1000,
+  "train_batch_size": 128,
+  "test_batch_size": 512,
+  "n_splits_per_epoch": 1
+}
