@@ -1,4 +1,4 @@
-name: binarized
+name: aclbbnn
 channels:
   - nvidia
   - defaults

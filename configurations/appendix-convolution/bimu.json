@@ -7,9 +7,9 @@
   },
   "optimizer": "bimu",
   "optimizer_params": {
-    "likelihood_multiplier": 50,
+    "likelihood_multiplier": 70,
     "kl_multiplier": 1,
-    "lr_max": 0.01,
+    "lr_max": 0.08,
     "N": 20000,
     "lr": 33
   },

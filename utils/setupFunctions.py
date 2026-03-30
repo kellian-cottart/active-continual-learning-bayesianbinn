@@ -43,7 +43,6 @@ def configure_networks(configuration, rng):
         "binarybayesianconvcifar100": BinaryBayesianCNNCifar100,
         "binarybayesianconvmnist": BinaryBayesianCNNMNIST,
         "binarybayesianconvcore50": BinaryBayesianCNNCore50,
-        "binarybayesianresnet": BinaryBayesianResNetCIFAR,
         "realconvcifar100": RealCNNCifar100,
     }
     if not "network_params" in configuration:

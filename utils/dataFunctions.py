@@ -17,6 +17,7 @@ from jax.tree import map
 from torch import randperm, stack, tensor
 from torchvision.transforms import v2
 
+
 class FlattenAndCast(object):
     def __call__(self, pic):
         return np.ravel(np.array(pic, dtype=jnp.float32))
@@ -29,12 +30,13 @@ class NumpyLoader(DataLoader):
             dataset,
             **kwargs
         )
-        
+
     def collate_fn(batch):
         images, labels = zip(*batch)
         images = np.stack(images)
         labels = np.array(labels)
         return images, labels
+
 
 def to_dataloader(data, batch_size, num_classes, fits_in_memory=True, augmentation=False):
     loader = []
@@ -46,10 +48,10 @@ def to_dataloader(data, batch_size, num_classes, fits_in_memory=True, augmentati
     else:
         for dataset in data:
             dataloader = NumpyLoader(
-                dataset, 
-                batch_size=batch_size, 
-                shuffle=True, 
-                drop_last=True, 
+                dataset,
+                batch_size=batch_size,
+                shuffle=True,
+                drop_last=True,
                 num_workers=0)
             loader.append(dataloader)
     return loader
@@ -117,7 +119,7 @@ def split_dataset(dataloader, n_splits, fits_in_memory=True, augmentation=False)
             for i in range(n_splits)
         ]
         return splits
-    
+
     dataset = dataloader.dataset
     total_size = len(dataset)
     split_size = total_size // n_splits
@@ -149,11 +151,16 @@ def split_dataset(dataloader, n_splits, fits_in_memory=True, augmentation=False)
     return splits
 
 # CIFAR strong augmentation (example)
+
+
 def build_cifar_augmentation():
     return v2.Compose([
         v2.ToImage(),
         v2.RandomCrop(32, padding=4),
         v2.RandomHorizontalFlip(),
+        v2.RandomRotation(15),
+        v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+        v2.RandomApply([v2.GaussianBlur(kernel_size=3)], p=0.2),
         v2.Normalize(
             mean=[0.4914, 0.4822, 0.4465],
             std=[0.2023, 0.1994, 0.2010]
