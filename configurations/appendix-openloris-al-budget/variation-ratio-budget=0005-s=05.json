@@ -11,7 +11,7 @@
       "mode": 6,
       "samples": 10,
       "budget": 0.005,
-      "scaler": 1
+      "scaler": 0.5
     }
   },
   "optimizer": "bimu",

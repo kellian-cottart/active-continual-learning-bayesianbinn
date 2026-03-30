@@ -41,6 +41,7 @@ import equinox as eqx
 import traceback
 
 os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.85"
+os.environ["XLA_FLAGS"] = "--xla_gpu_mlir_emitter_level=4"
 # argparse allows to load a configuration from a file
 CONFIGURATION_LOADING_FOLDER = "configurations"
 # first argument is name of config file

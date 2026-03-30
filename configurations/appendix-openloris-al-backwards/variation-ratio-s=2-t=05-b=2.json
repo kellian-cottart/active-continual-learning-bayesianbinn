@@ -8,10 +8,9 @@
       "width": 1
     },
     "active_learning": {
-      "mode": 6,
-      "samples": 10,
-      "budget": 0.04,
-      "scaler": 1
+      "mode": 3,
+      "threshold": 0.5,
+      "samples": 2
     }
   },
   "optimizer": "bimu",
@@ -59,8 +58,8 @@
   "n_tasks": 12,
   "epochs": 1,
   "seed": 1000,
-  "n_train_samples": 10,
-  "n_test_samples": 10,
+  "n_train_samples": 2,
+  "n_test_samples": 2,
   "train_batch_size": 1,
   "test_batch_size": 4
 }

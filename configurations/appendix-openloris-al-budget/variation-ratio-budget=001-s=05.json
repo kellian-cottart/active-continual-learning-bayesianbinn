@@ -10,8 +10,8 @@
     "active_learning": {
       "mode": 6,
       "samples": 10,
-      "budget": 0.02,
-      "scaler": 1
+      "budget": 0.01,
+      "scaler": 0.5
     }
   },
   "optimizer": "bimu",
