@@ -3,7 +3,7 @@
   "network_params": {
     "layers": [1024, 10],
     "temperature": 1,
-    "activation_fn": "reversebinarygate"
+    "activation_fn": "sign"
   },
   "optimizer": "bimu",
   "optimizer_params": {
@@ -15,7 +15,8 @@
   },
   "task": "cifar10",
   "task_params": {
-    "dataset_normalisation": "standardised"
+    "dataset_normalisation": "standardised",
+    "data_augmentation": true
   },
   "n_tasks": 1,
   "epochs": 100,

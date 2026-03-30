@@ -41,7 +41,6 @@ import equinox as eqx
 import traceback
 
 os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.85"
-os.environ["XLA_FLAGS"] = "--xla_gpu_mlir_emitter_level=4"
 # argparse allows to load a configuration from a file
 CONFIGURATION_LOADING_FOLDER = "configurations"
 # first argument is name of config file
@@ -134,6 +133,8 @@ if __name__ == "__main__":
         # save config
         with open(CONFIGURATION_PATH + "/config.json", "w") as f:
             json.dump(configuration, f, indent=4)
+        data_augmentation = configuration["task_params"].get(
+            "data_augmentation", False)
         try:
             # Initialize the random number generator
             manual_seed(configuration["seed"])
@@ -290,10 +291,8 @@ if __name__ == "__main__":
                      "memory_occupation.npy"), memory_occupation)
 
             # ---------- Preparing Dataloaders --------------
-            data_augmentation = configuration["task_params"].get(
-                "data_augmentation", False)
             train = to_dataloader(
-                train, configuration["train_batch_size"], num_classes, fits_in_memory=FITS_IN_MEMORY, augmentation=data_augmentation)
+                train, configuration["train_batch_size"], num_classes, fits_in_memory=FITS_IN_MEMORY)
             test_dataloader = to_dataloader(
                 test, configuration["test_batch_size"], num_classes, fits_in_memory=FITS_IN_MEMORY)
 
@@ -310,9 +309,10 @@ if __name__ == "__main__":
                         train), " != ", configuration["n_tasks"])
 
                 for epoch in epoch_pbar:
-                    rng, key = jax.random.split(rng)
+                    rng, key = jax.random.split(rng)                    
+                    
                     split_train_dataloader = split_dataset(
-                        task_train_dataloader, n_splits_per_epoch, fits_in_memory=FITS_IN_MEMORY)
+                        task_train_dataloader, n_splits_per_epoch, fits_in_memory=FITS_IN_MEMORY, augmentation=data_augmentation)
                     split_epoch_pbar = tqdm(range(n_splits_per_epoch), desc="Splits") if VERBOSE else range(
                         n_splits_per_epoch)
 

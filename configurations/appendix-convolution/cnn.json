@@ -10,7 +10,8 @@
   },
   "task": "cifar10",
   "task_params": {
-    "dataset_normalisation": "None"
+    "dataset_normalisation": "standardised",
+    "data_augmentation": true
   },
   "n_tasks": 1,
   "epochs": 100,

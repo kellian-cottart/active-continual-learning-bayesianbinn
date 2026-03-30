@@ -14,75 +14,27 @@ import jax
 from torch.utils.data import TensorDataset, DataLoader, default_collate, Subset
 import numpy as np
 from jax.tree import map
-from torch import randperm
+from torch import randperm, stack, tensor
 from torchvision.transforms import v2
 
 class FlattenAndCast(object):
     def __call__(self, pic):
         return np.ravel(np.array(pic, dtype=jnp.float32))
 
-# Collate for numpy arrays
-def numpy_collate(batch):
-    return list(map(np.asarray, default_collate(batch)))
 
-# CIFAR strong augmentation (example)
-def build_cifar_augmentation():
-    return v2.Compose([
-    # Spatial augmentations
-    v2.RandomCrop(32, padding=4),
-    v2.RandomHorizontalFlip(p=0.5),
-    v2.ToTensor(),
-    v2.Normalize(
-        mean=[0.4914, 0.4822, 0.4465],
-        std=[0.2023, 0.1994, 0.2010]
-    ),
-    ])
 # Custom DataLoader
 class NumpyLoader(DataLoader):
-    def __init__(self, dataset, batch_size=1,
-                 shuffle=False, sampler=None,
-                 batch_sampler=None, num_workers=0,
-                 pin_memory=False, drop_last=False,
-                 timeout=0, worker_init_fn=None,
-                 augment=False):
-
-        self.augment = augment
-        self.transform = build_cifar_augmentation() if augment else None
-
+    def __init__(self, dataset, **kwargs):
         super().__init__(
             dataset,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            sampler=sampler,
-            batch_sampler=batch_sampler,
-            num_workers=num_workers,
-            collate_fn=numpy_collate,
-            pin_memory=pin_memory,
-            drop_last=drop_last,
-            timeout=timeout,
-            worker_init_fn=worker_init_fn
+            **kwargs
         )
-
-    def __getitem__(self, index):
-        x, y = self.dataset[index]
-        if self.transform is not None:
-            x = x.transpose(1, 2, 0)  # (C,H,W) -> (H,W,C)
-            x = self.transform(x)      # torch tensor (C,H,W)
-            x = x.numpy()              # back to numpy
-        return x, y
-
-    def __iter__(self):
-        for batch in super().__iter__():
-            if self.augment:
-                images, labels = batch
-                augmented_images = []
-                for img in images:
-                    img = img.transpose(1, 2, 0)  # (C,H,W) -> (H,W,C)
-                    augmented_img = self.transform(img)  # torch tensor (C,H,W)
-                    augmented_images.append(augmented_img.numpy())  # back to numpy
-                yield np.stack(augmented_images), labels
-            else:
-                yield batch
+        
+    def collate_fn(batch):
+        images, labels = zip(*batch)
+        images = np.stack(images)
+        labels = np.array(labels)
+        return images, labels
 
 def to_dataloader(data, batch_size, num_classes, fits_in_memory=True, augmentation=False):
     loader = []
@@ -94,7 +46,11 @@ def to_dataloader(data, batch_size, num_classes, fits_in_memory=True, augmentati
     else:
         for dataset in data:
             dataloader = NumpyLoader(
-                dataset, batch_size=batch_size, shuffle=True, drop_last=True, augment=augmentation)
+                dataset, 
+                batch_size=batch_size, 
+                shuffle=True, 
+                drop_last=True, 
+                num_workers=0)
             loader.append(dataloader)
     return loader
 
@@ -146,27 +102,59 @@ def shuffle_dataset(dataloader, key):
     return images, labels
 
 
-def split_dataset(dataloader, n_splits, fits_in_memory=True):
+def split_dataset(dataloader, n_splits, fits_in_memory=True, augmentation=False):
     if fits_in_memory:
         images, labels = dataloader
         split_size = images.shape[0] // n_splits
         end_idx = split_size * n_splits
+
         images = images[:end_idx]
         labels = labels[:end_idx]
-        splits = []
-        for i in range(n_splits):
-            start = i * split_size
-            end = start + split_size
-            splits.append((images[start:end], labels[start:end]))
-    else:
-        total_size = len(dataloader.dataset)
-        split_size = total_size // n_splits
-        splits = []
-        for i in range(n_splits):
-            start = i * split_size
-            end = start + split_size if i < n_splits - 1 else total_size
-            subset = Subset(
-                dataloader.dataset, list(range(start, end)))
-            splits.append(NumpyLoader(
-                subset, batch_size=dataloader.batch_size, shuffle=False, drop_last=True))
+
+        splits = [
+            (images[i * split_size:(i + 1) * split_size],
+             labels[i * split_size:(i + 1) * split_size])
+            for i in range(n_splits)
+        ]
+        return splits
+    
+    dataset = dataloader.dataset
+    total_size = len(dataset)
+    split_size = total_size // n_splits
+    transform = build_cifar_augmentation() if augmentation else None
+    splits = []
+    for i in range(n_splits):
+        start = i * split_size
+        end = start + split_size if i < n_splits - 1 else total_size
+        imgs = []
+        lbls = []
+        for idx in range(start, end):
+            x, y = dataset[idx]
+            imgs.append(x)
+            lbls.append(y)
+        imgs = stack(imgs)
+        lbls = stack(lbls)
+        if transform is not None:
+            imgs = transform(imgs)
+        subset = TensorDataset(imgs, lbls)
+        splits.append(
+            NumpyLoader(
+                subset,
+                batch_size=dataloader.batch_size,
+                shuffle=False,
+                drop_last=True
+            )
+        )
+
     return splits
+
+# CIFAR strong augmentation (example)
+def build_cifar_augmentation():
+    return v2.Compose([
+        v2.ToImage(),
+        v2.RandomCrop(32, padding=4),
+        v2.RandomHorizontalFlip(),
+        v2.Normalize(
+            mean=[0.4914, 0.4822, 0.4465],
+            std=[0.2023, 0.1994, 0.2010]
+        )])

@@ -73,6 +73,7 @@ class RealCNNCifar100(BaseRealCNN):
                                              channelwise_affine=True,
                                              momentum=0.1,
                                              eps=1e-5,
+                                             mode="batch",
                                              inference=False,))
                 self.layers.append(activation_fn)
 
@@ -100,6 +101,7 @@ class RealCNNCifar100(BaseRealCNN):
                 channelwise_affine=True,
                 momentum=0.1,
                 eps=1e-5,
+                mode="batch",
                 inference=False,
             ))
             if i < len(all_fc_layers) - 2:
