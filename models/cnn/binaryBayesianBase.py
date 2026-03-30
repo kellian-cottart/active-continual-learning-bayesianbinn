@@ -6,6 +6,7 @@ from jax.random import split
 from jax import vmap
 from functools import partial
 
+
 def forward(x, state, layers, key, backwards=False, temperature=1.0):
     """Forward pass for one sample through layers"""
     for layer in layers:
@@ -14,7 +15,7 @@ def forward(x, state, layers, key, backwards=False, temperature=1.0):
             layer_fn = layer if backwards else layer.sample
             x = layer_fn(x, key=l_key, temperature=temperature)
         elif isinstance(layer, BatchNorm):
-            x, state = layer(x, state, inference=not backwards)
+            x, state = layer(x, state)
         elif isinstance(layer, Dropout):
             l_key, key = split(key, 2)
             x = layer(x, inference=not backwards, key=l_key)
@@ -35,15 +36,16 @@ class BaseBinaryBayesianCNN(Module):
     def __call__(self, x, state, samples, key, *, backwards=False):
         keys = split(key, samples)
         # vmap over samples dimension
-        states = jax.tree.map(lambda x: repeat(x[None, ...], samples, axis=0), state)
-        x, states = vmap(forward, 
-            in_axes=(None, 0, None, 0, None, None)
-        )(
+        states = jax.tree.map(lambda x: repeat(
+            x[None, ...], samples, axis=0), state)
+        x, states = vmap(forward,
+                         in_axes=(None, 0, None, 0, None, None)
+                         )(
             x, states, self.layers, keys, backwards, self.temperature
         )
-        state = jax.tree.map(lambda x: x[0], states)  # take first sample's state (they should all be the same)
+        # take first sample's state (they should all be the same)
+        state = jax.tree.map(lambda x: x[0], states)
         return x, state
-
 
 
 class BinaryResidualBlock(Module):

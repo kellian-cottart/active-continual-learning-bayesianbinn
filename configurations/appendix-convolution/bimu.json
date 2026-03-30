@@ -3,7 +3,7 @@
   "network_params": {
     "layers": [1024, 10],
     "temperature": 1,
-    "activation_fn": "sign"
+    "activation_fn": "reversebinarygate"
   },
   "optimizer": "bimu",
   "optimizer_params": {

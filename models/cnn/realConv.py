@@ -5,6 +5,7 @@ from typing import Callable
 from customLayers.convolutions.realConv import RealConv2D
 from equinox.nn import Linear, LayerNorm, MaxPool2d, AvgPool2d, BatchNorm, Dropout
 
+
 class BaseRealCNN(Module):
     layers: list
 
@@ -23,9 +24,10 @@ class BaseRealCNN(Module):
             new_key = split(key, len(self.layers))
         for i, layer in enumerate(self.layers):
             if isinstance(layer, BatchNorm):
-                x, state = layer(x, state, inference=not backwards)
+                x, state = layer(x, state)
             elif isinstance(layer, Dropout):
-                x = layer(x, key=new_key[i] if backwards else None, inference=not backwards)
+                x = layer(
+                    x, key=new_key[i] if backwards else None, inference=not backwards)
             else:
                 x = layer(x)
         return x, state
@@ -67,13 +69,12 @@ class RealCNNCifar100(BaseRealCNN):
                     use_bias=use_bias,
                 ))
                 self.layers.append(BatchNorm(axis_name="batch",
-                    input_size=out_ch,
-                    channelwise_affine=True,
-                    momentum=0.1,
-                    eps=1e-5,
-                    inference=False,))
+                                             input_size=out_ch,
+                                             channelwise_affine=True,
+                                             momentum=0.1,
+                                             eps=1e-5,
+                                             inference=False,))
                 self.layers.append(activation_fn)
-                self.layers.append(Dropout(p=0.7, inference=False))
 
             self.layers.append(MaxPool2d(kernel_size=2, stride=2, padding=0))
             spatial_size //= 2
@@ -94,12 +95,12 @@ class RealCNNCifar100(BaseRealCNN):
             ))
             # BatchNorm for FC layers
             self.layers.append(BatchNorm(
-                    input_size=all_fc_layers[i + 1],
-                    axis_name="batch",
-                    channelwise_affine=True,
-                    momentum=0.1,
-                    eps=1e-5,
-                    inference=False,
-                ))
+                input_size=all_fc_layers[i + 1],
+                axis_name="batch",
+                channelwise_affine=True,
+                momentum=0.1,
+                eps=1e-5,
+                inference=False,
+            ))
             if i < len(all_fc_layers) - 2:
                 self.layers.append(activation_fn)
