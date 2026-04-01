@@ -15,11 +15,11 @@
   },
   "task": "cifar10",
   "task_params": {
-    "dataset_normalisation": "standardised",
+    "dataset_normalisation": "None",
     "data_augmentation": true
   },
   "n_tasks": 1,
-  "epochs": 200,
+  "epochs": 500,
   "seed": 1000,
   "n_train_samples": 1,
   "n_test_samples": 1,
