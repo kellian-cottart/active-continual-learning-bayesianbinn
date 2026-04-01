@@ -3,10 +3,7 @@
   "network_params": {
     "layers": [1024, 1024, 10],
     "temperature": 1,
-    "activation_fn": "reversebinarygate",
-    "activation_params": {
-      "width": 1
-    }
+    "activation_fn": "sign"
   },
   "optimizer": "bimu",
   "optimizer_params": {
@@ -43,13 +40,14 @@
   },
   "task": "cifar10",
   "task_params": {
-    "dataset_normalisation": "standardised"
+    "dataset_normalisation": "standardised",
+    "data_augmentation": true
   },
   "n_tasks": 1,
-  "epochs": 20,
+  "epochs": 100,
   "seed": 1000,
   "n_train_samples": 1,
-  "n_test_samples": 3,
-  "train_batch_size": 64,
+  "n_test_samples": 1,
+  "train_batch_size": 128,
   "test_batch_size": 512
 }

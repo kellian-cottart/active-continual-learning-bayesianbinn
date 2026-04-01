@@ -27,11 +27,13 @@ def forward(x, state, layers, key, backwards=False, temperature=1.0):
 class BaseBinaryBayesianCNN(Module):
     layers: list
     temperature: float
-
-    def __init__(self, key, layers=None, temperature=1.0, **kwargs):
+    active_learning: dict
+    
+    def __init__(self, key, layers=None, temperature=1.0, active_learning=None, **kwargs):
         super().__init__()
         self.layers = []
         self.temperature = temperature
+        self.active_learning = active_learning
 
     def __call__(self, x, state, samples, key, *, backwards=False):
         keys = split(key, samples)

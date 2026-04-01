@@ -309,10 +309,10 @@ if __name__ == "__main__":
                         train), " != ", configuration["n_tasks"])
 
                 for epoch in epoch_pbar:
-                    rng, key = jax.random.split(rng)                    
-                    
+                    train_ck = training_core_keys[task_id, epoch]
+                    test_ck = test_core_keys[task_id, epoch]                  
                     split_train_dataloader = split_dataset(
-                        task_train_dataloader, n_splits_per_epoch, fits_in_memory=FITS_IN_MEMORY, augmentation=data_augmentation)
+                        task_train_dataloader, n_splits_per_epoch, key=training_core_keys[task_id, epoch], fits_in_memory=FITS_IN_MEMORY, augmentation=data_augmentation)
                     split_epoch_pbar = tqdm(range(n_splits_per_epoch), desc="Splits") if VERBOSE else range(
                         n_splits_per_epoch)
 
@@ -323,8 +323,6 @@ if __name__ == "__main__":
                     if VERBOSE:
                         pbar.set_description(
                             f"Task {task+1}/{configuration['n_tasks']} - Epoch {epoch+1}/{configuration['epochs']}")
-                    train_ck = training_core_keys[task_id, epoch]
-                    test_ck = test_core_keys[task_id, epoch]
                     for split_epoch in split_epoch_pbar:
                         model, opt_state, losses, ewc_streaming_parameters, model_state, si_parameters = train_fn(
                             model=model,

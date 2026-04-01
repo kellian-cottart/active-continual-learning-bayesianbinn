@@ -16,7 +16,9 @@ import numpy as np
 from jax.tree import map
 from torch import randperm, stack, tensor
 from torchvision.transforms import v2
-
+from jax import random, jit, vmap, lax
+import jax.image as jimg
+import dm_pix as pix
 
 class FlattenAndCast(object):
     def __call__(self, pic):
@@ -104,54 +106,72 @@ def shuffle_dataset(dataloader, key):
     return images, labels
 
 
-def split_dataset(dataloader, n_splits, fits_in_memory=True, augmentation=False):
-    if fits_in_memory:
-        images, labels = dataloader
-        split_size = images.shape[0] // n_splits
+def split_dataset(dataloader, n_splits, key=None, fits_in_memory=True, augmentation=False):
+    if not fits_in_memory:
+        # unchanged branch
+        dataset = dataloader.dataset
+        total_size = len(dataset)
+        split_size = total_size // n_splits
+        transform = build_cifar_augmentation() if augmentation else None
+        splits = []
+        for i in range(n_splits):
+            start = i * split_size
+            end = start + split_size if i < n_splits - 1 else total_size
+            imgs = []
+            lbls = []
+            for idx in range(start, end):
+                x, y = dataset[idx]
+                imgs.append(x)
+                lbls.append(y)
+            imgs = stack(imgs)
+            lbls = stack(lbls)
+            if transform is not None:
+                imgs = transform(imgs)
+            subset = TensorDataset(imgs, lbls)
+            splits.append(
+                NumpyLoader(
+                    subset,
+                    batch_size=dataloader.batch_size,
+                    shuffle=True,
+                    drop_last=True
+                )
+            )
+        return splits
+
+    images, labels = dataloader
+    augment_fn = cifar_augment_batch
+
+    @jax.jit(static_argnames=("n_splits", "use_aug"))
+    def _split(images, labels, key, n_splits, use_aug):
+        N = images.shape[0]  # 390
+        split_size = N // n_splits
         end_idx = split_size * n_splits
 
         images = images[:end_idx]
         labels = labels[:end_idx]
 
-        splits = [
-            (images[i * split_size:(i + 1) * split_size],
-             labels[i * split_size:(i + 1) * split_size])
-            for i in range(n_splits)
-        ]
-        return splits
+        def body_fn(carry, inputs):
+            key = carry
+            x, y = inputs 
+            key, subkey = random.split(key)
+            if use_aug:
+                x = augment_fn(x, subkey)
 
-    dataset = dataloader.dataset
-    total_size = len(dataset)
-    split_size = total_size // n_splits
-    transform = build_cifar_augmentation() if augmentation else None
-    splits = []
-    for i in range(n_splits):
-        start = i * split_size
-        end = start + split_size if i < n_splits - 1 else total_size
-        imgs = []
-        lbls = []
-        for idx in range(start, end):
-            x, y = dataset[idx]
-            imgs.append(x)
-            lbls.append(y)
-        imgs = stack(imgs)
-        lbls = stack(lbls)
-        if transform is not None:
-            imgs = transform(imgs)
-        subset = TensorDataset(imgs, lbls)
-        splits.append(
-            NumpyLoader(
-                subset,
-                batch_size=dataloader.batch_size,
-                shuffle=False,
-                drop_last=True
-            )
-        )
+            return key, (x, y)
 
-    return splits
+        # scan over the 390 axis
+        new_key, key = random.split(key)
+        _, (xs, ys) = lax.scan(body_fn, new_key, (images, labels))
+        # xs: (390, 128, 3, 32, 32)
+
+        # reshape into splits
+        xs = xs.reshape(n_splits, split_size, *xs.shape[1:])
+        ys = ys.reshape(n_splits, split_size, *ys.shape[1:])
+        return xs, ys
+    xs, ys = _split(images, labels, key, n_splits, augmentation)
+    return list(zip(xs, ys))
 
 # CIFAR strong augmentation (example)
-
 
 def build_cifar_augmentation():
     return v2.Compose([
@@ -159,9 +179,78 @@ def build_cifar_augmentation():
         v2.RandomCrop(32, padding=4),
         v2.RandomHorizontalFlip(),
         v2.RandomRotation(15),
-        v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-        v2.RandomApply([v2.GaussianBlur(kernel_size=3)], p=0.2),
         v2.Normalize(
             mean=[0.4914, 0.4822, 0.4465],
             std=[0.2023, 0.1994, 0.2010]
         )])
+
+
+
+# Constants
+_MEAN = jnp.array([0.4914, 0.4822, 0.4465])
+_STD = jnp.array([0.2023, 0.1994, 0.2010])
+
+
+def _pad_crop_batch(images, keys):
+    B, C, H, W = images.shape
+    padded = jnp.pad(images, ((0, 0), (0, 0), (4, 4), (4, 4)), mode="constant")
+    offsets = random.randint(keys, (B, 2), 0, 9)
+
+    def crop(img, offset):
+        h, w = offset
+        return lax.dynamic_slice(img, (0, h, w), (C, 32, 32))
+
+    return vmap(crop)(padded, offsets)
+
+
+def _flip_batch(images, keys):
+    flips = random.bernoulli(keys, 0.5, (images.shape[0],))
+    return jnp.where(
+        flips[:, None, None, None],
+        jnp.flip(images, axis=3),  # width axis
+        images
+    )
+
+
+def _rotate_batch(images, keys):
+    angles = random.uniform(keys, (images.shape[0],), minval=-15.0, maxval=15.0)
+    angles = angles * jnp.pi / 180.0
+    # dm_pix expects NHWC
+    images_nhwc = jnp.transpose(images, (0, 2, 3, 1))
+    rotated = vmap(pix.rotate, in_axes=(0, 0))(images_nhwc, angles)
+    return jnp.transpose(rotated, (0, 3, 1, 2))
+
+@jax.jit
+def _color_jitter_batch(images, key, brightness=0.2, contrast=0.2, saturation=0.2):
+    """
+    images: (B, C, H, W) in [0,1]
+    key: single PRNGKey for the batch
+    """
+    B = images.shape[0]
+    k_brightness, k_contrast, k_saturation = random.split(key, 3)
+    # Brightness
+    bright_offsets = random.uniform(k_brightness, (B,1,1,1), minval=-brightness, maxval=brightness)
+    images = images + bright_offsets
+    # Contrast
+    mean = jnp.mean(images, axis=(1,2,3), keepdims=True)
+    contrast_factors = random.uniform(k_contrast, (B,1,1,1), minval=1-contrast, maxval=1+contrast)
+    images = (images - mean) * contrast_factors + mean
+    # Saturation
+    gray = jnp.mean(images, axis=1, keepdims=True)
+    sat_factors = random.uniform(k_saturation, (B,1,1,1), minval=1-saturation, maxval=1+saturation)
+    images = gray + (images - gray) * sat_factors
+    return images
+
+@jit
+def cifar_augment_batch(images, key):
+    """
+    images: (B, C, H, W)
+    key: single PRNGKey for the batch
+    """
+    k_pad, k_flip, k_rotate, k_color = random.split(key, 4)
+    images = _flip_batch(images, k_flip)
+    images = lax.cond(random.bernoulli(k_pad, 0.5), lambda _: _pad_crop_batch(images, k_pad), lambda _: images, operand=None)
+    images = lax.cond(random.bernoulli(k_rotate, 0.5), lambda _: _rotate_batch(images, k_rotate), lambda _: images, operand=None)
+    images = lax.cond(random.bernoulli(k_color, 0.5), lambda _: _color_jitter_batch(images, k_color), lambda _: images, operand=None)
+    images = (images - _MEAN[None, :, None, None]) / _STD[None, :, None, None]
+    return images

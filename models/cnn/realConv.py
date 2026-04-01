@@ -43,12 +43,12 @@ class RealCNNCifar100(BaseRealCNN):
     ):
         super().__init__(layers)
         conv_blocks = [
-            (3, 32),
-            (32, 32),
-            (32, 64),
-            (64, 64),
-            (64, 128),
-            (128, 128)
+            (3, 128),
+            (128, 128),
+            (128, 256),
+            (256, 256),
+            (256, 512),
+            (512, 512),
         ]
 
         num_keys = len(conv_blocks) + len(layers) - 1
@@ -68,18 +68,18 @@ class RealCNNCifar100(BaseRealCNN):
                     padding="SAME",
                     use_bias=use_bias,
                 ))
+                self.layers.append(activation_fn)
                 self.layers.append(BatchNorm(axis_name="batch",
                                              input_size=out_ch,
-                                             channelwise_affine=True,
+                                             channelwise_affine=False,
                                              momentum=0.1,
                                              eps=1e-5,
-                                             mode="batch",
                                              inference=False,))
-                self.layers.append(activation_fn)
-
-            self.layers.append(MaxPool2d(kernel_size=2, stride=2, padding=0))
+            # MaxPool after the block
+            self.layers.append(
+                MaxPool2d(kernel_size=2, stride=2, padding=0))
+            
             spatial_size //= 2
-
         # Flatten for FC layers
         self.layers.append(ravel)
 

@@ -85,9 +85,6 @@ class BaseBinaryBayesianConv(Conv):
             feature_group_count=self.groups,
         )
         x = squeeze(x, axis=0)
-
-        if self.use_bias:
-            x = x + self.bias
         return x
 
     def sample(self, x: Array, *, key: PRNGKeyArray, temperature: float = 1) -> Array:

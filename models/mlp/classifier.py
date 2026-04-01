@@ -43,7 +43,7 @@ class BaseMLP(Module):
                 self.layers.append(activation_fn)
         self.active_learning = active_learning
 
-    def __call__(self, x, state, *, backwards=False):
+    def __call__(self, x, state, key, *, backwards=False):
         x = ravel(x)
         for layer in self.layers:
             if isinstance(layer, BatchNorm):

@@ -48,10 +48,10 @@ def loss_fn(model, images, labels, samples=None, rng=None, ewc_online_parameters
     elif any(param is not None for param in [ewc_online_parameters, ewc_streaming_parameters, ewc_parameters]):
         loss_fn_to_use = ewc_loss_fn
         ewc_params = ewc_online_parameters or ewc_streaming_parameters or ewc_parameters
-        loss_args = (model, images, labels, ewc_params, init_state)
+        loss_args = (model, images, labels, rng, ewc_params, init_state)
     elif si_parameters is not None:
         loss_fn_to_use = si_loss_fn
-        loss_args = (model, images, labels, si_parameters, init_state)
+        loss_args = (model, images, labels, rng, si_parameters, init_state)
     else:
         loss_fn_to_use = deterministic_loss_fn
         loss_args = (model, images, labels, rng, init_state)
@@ -59,15 +59,12 @@ def loss_fn(model, images, labels, samples=None, rng=None, ewc_online_parameters
 
 
 @eqx.filter_value_and_grad(has_aux=True)
-def si_loss_fn(model, images, labels, si_parameters, init_state=None):
+def si_loss_fn(model, images, labels, rng, si_parameters, init_state=None):
     coefficient = si_parameters["coefficient"]
     omega = si_parameters["omega"]
     old_param = si_parameters["old_param"]
-    predictions, state = jax.vmap(model,
-                                  axis_name="batch",
-                                  in_axes=(0, None),
-                                  out_axes=(0, None)
-                                )(images, init_state)
+    predictions, state = jax.vmap(partial(model, backwards=True), axis_name="batch",
+                                  in_axes=(0, None, None), out_axes=(0, None))(images, init_state, rng) 
     output = jax.nn.log_softmax(predictions, axis=-1) * labels
     difference_squared = map(
         lambda omega, new, old: omega * (new - old)**2,
@@ -82,12 +79,12 @@ def si_loss_fn(model, images, labels, si_parameters, init_state=None):
 
 
 @eqx.filter_value_and_grad(has_aux=True)
-def ewc_loss_fn(model, images, labels, ewc_parameters, init_state=None):
+def ewc_loss_fn(model, images, labels, rng, ewc_parameters, init_state=None):
     fisher = ewc_parameters["fisher"]
     old_param = ewc_parameters["old_param"]
     importance = ewc_parameters["importance"]
-    predictions, state = jax.vmap(model, axis_name="batch",
-                                  in_axes=(0, None), out_axes=(0, None))(images, init_state)
+    predictions, state = jax.vmap(partial(model, backwards=True), axis_name="batch",
+                                  in_axes=(0, None, None), out_axes=(0, None))(images, init_state, rng) 
     output = jax.nn.log_softmax(predictions, axis=-1) * labels
     difference_squared = map(
         lambda fisher, new, old: multiply(fisher,  (new - old) ** 2),
