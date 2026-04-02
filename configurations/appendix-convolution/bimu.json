@@ -7,11 +7,11 @@
   },
   "optimizer": "bimu",
   "optimizer_params": {
-    "likelihood_multiplier": 61.2,
-    "kl_multiplier": 0.22,
-    "lr_max": 0.09,
-    "N": 11950,
-    "lr": 4.3
+    "likelihood_multiplier": 241.82735985416565,
+    "kl_multiplier": 4.227385841644218,
+    "lr_max": 0.01779832074902881,
+    "N": 18000,
+    "lr": 6.066463787009234
   },
   "task": "cifar10",
   "task_params": {
@@ -20,10 +20,10 @@
   },
   "n_tasks": 1,
   "epochs": 500,
-  "seed": 1000,
+  "seed": 1,
   "n_train_samples": 1,
-  "n_test_samples": 1,
-  "train_batch_size": 128,
+  "n_test_samples": 5,
+  "train_batch_size": 32,
   "test_batch_size": 512,
   "n_splits_per_epoch": 1
 }

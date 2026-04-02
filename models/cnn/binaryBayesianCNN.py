@@ -38,6 +38,7 @@ class BinaryBayesianCNNCifar100(BaseBinaryBayesianCNN):
                     inference=False,))
                 self.layers.append(activation_fn)
             
+            self.layers.append(Dropout(p=0.1))
             # MaxPool after the block
             self.layers.append(MaxPool2d(kernel_size=2, stride=2, padding=0))
             spatial_size = spatial_size // 2  # update spatial size after pooling

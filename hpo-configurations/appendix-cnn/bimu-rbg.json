@@ -3,7 +3,7 @@
   "network_params": {
     "layers": [1024, 1024, 10],
     "temperature": 1,
-    "activation_fn": "sign"
+    "activation_fn": "reversegate"
   },
   "optimizer": "bimu",
   "optimizer_params": {
@@ -48,7 +48,7 @@
   "epochs": 100,
   "seed": 1000,
   "n_train_samples": 1,
-  "n_test_samples": 1,
-  "train_batch_size": 128,
+  "n_test_samples": 5,
+  "train_batch_size": 32,
   "test_batch_size": 512
 }
