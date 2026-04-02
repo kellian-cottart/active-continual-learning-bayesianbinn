@@ -1,6 +1,7 @@
 
 from .binaryBayesianBase import *
 
+
 class BinaryBayesianCNNCifar100(BaseBinaryBayesianCNN):
     def __init__(self, key, layers, temperature, use_bias=False, activation_fn=None, **kwargs):
         super().__init__(key, layers, temperature)
@@ -30,14 +31,14 @@ class BinaryBayesianCNNCifar100(BaseBinaryBayesianCNN):
                     use_bias=use_bias,
                 ))
                 self.layers.append(BatchNorm(axis_name="batch",
-                    input_size=out_ch,
-                    channelwise_affine=False,
-                    momentum=0.1,
-                    mode="batch",
-                    eps=1e-5,
-                    inference=False,))
+                                             input_size=out_ch,
+                                             channelwise_affine=False,
+                                             momentum=0.1,
+                                             mode="batch",
+                                             eps=1e-5,
+                                             inference=False,))
                 self.layers.append(activation_fn)
-            
+
             self.layers.append(Dropout(p=0.1))
             # MaxPool after the block
             self.layers.append(MaxPool2d(kernel_size=2, stride=2, padding=0))
@@ -58,14 +59,15 @@ class BinaryBayesianCNNCifar100(BaseBinaryBayesianCNN):
                 key=keys[len(conv_blocks) + i]
             ))
             self.layers.append(BatchNorm(axis_name="batch",
-                    input_size=layers[i + 1],
-                    channelwise_affine=False,
-                    momentum=0.1,
-                    mode="batch",
-                    eps=1e-5,
-                    inference=False,))
+                                         input_size=layers[i + 1],
+                                         channelwise_affine=False,
+                                         momentum=0.1,
+                                         mode="batch",
+                                         eps=1e-5,
+                                         inference=False,))
             if i < len(layers) - 2:
                 self.layers.append(activation_fn)
+
 
 class BinaryBayesianCNNMNIST(BaseBinaryBayesianCNN):
     def __init__(self, key, layers, temperature, use_bias=False, activation_fn=None, active_learning=None, **kwargs):

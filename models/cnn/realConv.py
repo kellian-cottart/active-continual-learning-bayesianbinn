@@ -68,17 +68,19 @@ class RealCNNCifar100(BaseRealCNN):
                     padding="SAME",
                     use_bias=use_bias,
                 ))
-                self.layers.append(activation_fn)
                 self.layers.append(BatchNorm(axis_name="batch",
                                              input_size=out_ch,
                                              channelwise_affine=False,
                                              momentum=0.1,
+                                             mode="batch",
                                              eps=1e-5,
                                              inference=False,))
+                self.layers.append(activation_fn)
+            self.layers.append(Dropout(p=0.1))
             # MaxPool after the block
             self.layers.append(
                 MaxPool2d(kernel_size=2, stride=2, padding=0))
-            
+
             spatial_size //= 2
         # Flatten for FC layers
         self.layers.append(ravel)
@@ -98,7 +100,7 @@ class RealCNNCifar100(BaseRealCNN):
             self.layers.append(BatchNorm(
                 input_size=all_fc_layers[i + 1],
                 axis_name="batch",
-                channelwise_affine=True,
+                channelwise_affine=False,
                 momentum=0.1,
                 eps=1e-5,
                 mode="batch",

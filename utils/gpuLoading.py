@@ -296,10 +296,18 @@ class GPULoading:
         dataset_normalisation = kwargs.get("dataset_normalisation", "none")
         train_x = normalisation(
             train_x, dataset_normalisation=dataset_normalisation)
-        train_x = padding(train_x, self.padding)
         test_x = normalisation(
             test_x, dataset_normalisation=dataset_normalisation)
-        test_x = padding(test_x, self.padding)
+        if kwargs.get("validation", False):
+            # Shuffle the training data
+            rand_perm = randperm(len(train_x)).cpu()
+            train_x = train_x[rand_perm]
+            train_y = train_y[rand_perm]
+            # Split the training data into a training set and a validation set (80/20 split)
+            split_idx = int(0.8 * len(train_x))
+            train_x, test_x = train_x[:split_idx], train_x[split_idx:]
+            train_y, test_y = train_y[:split_idx], train_y[split_idx:]
+
         return TensorDataset(train_x, Tensor(train_y).type(LongTensor)), TensorDataset(test_x, Tensor(test_y).type(LongTensor))
 
     def permuted_mnist_full(self, n_tasks=10, *args, **kwargs):
@@ -328,9 +336,6 @@ class GPULoading:
         test_labels = cat(test_labels)
         return train_dataset, test_dataset
 
-    
-
-    
     def cifar10(self, iterations=10, *args, **kwargs):
         """ Load a local dataset on GPU corresponding to CIFAR10 """
         # Deal with the training data
@@ -386,8 +391,10 @@ class GPULoading:
             test_y = dict[b'labels']
             # Normalize and pad the data
             dataset_normalisation = kwargs.get("dataset_normalisation", "none")
-            train_x = normalisation(train_x.reshape(-1, 3, 32, 32), dataset_normalisation=dataset_normalisation)
-            test_x = normalisation(test_x.reshape(-1, 3, 32, 32), dataset_normalisation=dataset_normalisation)
+            train_x = normalisation(
+                train_x.reshape(-1, 3, 32, 32), dataset_normalisation=dataset_normalisation)
+            test_x = normalisation(
+                test_x.reshape(-1, 3, 32, 32), dataset_normalisation=dataset_normalisation)
             if kwargs.get("validation", False):
                 # Shuffle the training data
                 rand_perm = randperm(len(train_x)).cpu()
