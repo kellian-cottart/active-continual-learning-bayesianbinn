@@ -20,6 +20,7 @@ from jax import random, jit, vmap, lax
 import jax.image as jimg
 import dm_pix as pix
 
+
 class FlattenAndCast(object):
     def __call__(self, pic):
         return np.ravel(np.array(pic, dtype=jnp.float32))
@@ -141,7 +142,6 @@ def split_dataset(dataloader, n_splits, key=None, fits_in_memory=True, augmentat
     images, labels = dataloader
     augment_fn = cifar_augment_batch
 
-    @jax.jit(static_argnames=("n_splits", "use_aug"))
     def _split(images, labels, key, n_splits, use_aug):
         N = images.shape[0]  # 390
         split_size = N // n_splits
@@ -152,7 +152,7 @@ def split_dataset(dataloader, n_splits, key=None, fits_in_memory=True, augmentat
 
         def body_fn(carry, inputs):
             key = carry
-            x, y = inputs 
+            x, y = inputs
             key, subkey = random.split(key)
             if use_aug:
                 x = augment_fn(x, subkey)
@@ -168,10 +168,21 @@ def split_dataset(dataloader, n_splits, key=None, fits_in_memory=True, augmentat
         xs = xs.reshape(n_splits, split_size, *xs.shape[1:])
         ys = ys.reshape(n_splits, split_size, *ys.shape[1:])
         return xs, ys
-    xs, ys = _split(images, labels, key, n_splits, augmentation)
+    jitted_split = jax.jit(
+        _split,
+        static_argnames=("n_splits", "use_aug")
+    )
+    xs, ys = jitted_split(
+        images=images,
+        labels=labels,
+        key=key,
+        n_splits=n_splits,
+        use_aug=augmentation
+    )
     return list(zip(xs, ys))
 
 # CIFAR strong augmentation (example)
+
 
 def build_cifar_augmentation():
     return v2.Compose([
@@ -183,7 +194,6 @@ def build_cifar_augmentation():
             mean=[0.4914, 0.4822, 0.4465],
             std=[0.2023, 0.1994, 0.2010]
         )])
-
 
 
 # Constants
@@ -213,12 +223,14 @@ def _flip_batch(images, keys):
 
 
 def _rotate_batch(images, keys):
-    angles = random.uniform(keys, (images.shape[0],), minval=-15.0, maxval=15.0)
+    angles = random.uniform(
+        keys, (images.shape[0],), minval=-15.0, maxval=15.0)
     angles = angles * jnp.pi / 180.0
     # dm_pix expects NHWC
     images_nhwc = jnp.transpose(images, (0, 2, 3, 1))
     rotated = vmap(pix.rotate, in_axes=(0, 0))(images_nhwc, angles)
     return jnp.transpose(rotated, (0, 3, 1, 2))
+
 
 @jax.jit
 def _color_jitter_batch(images, key, brightness=0.2, contrast=0.2, saturation=0.2):
@@ -229,17 +241,21 @@ def _color_jitter_batch(images, key, brightness=0.2, contrast=0.2, saturation=0.
     B = images.shape[0]
     k_brightness, k_contrast, k_saturation = random.split(key, 3)
     # Brightness
-    bright_offsets = random.uniform(k_brightness, (B,1,1,1), minval=-brightness, maxval=brightness)
+    bright_offsets = random.uniform(
+        k_brightness, (B, 1, 1, 1), minval=-brightness, maxval=brightness)
     images = images + bright_offsets
     # Contrast
-    mean = jnp.mean(images, axis=(1,2,3), keepdims=True)
-    contrast_factors = random.uniform(k_contrast, (B,1,1,1), minval=1-contrast, maxval=1+contrast)
+    mean = jnp.mean(images, axis=(1, 2, 3), keepdims=True)
+    contrast_factors = random.uniform(
+        k_contrast, (B, 1, 1, 1), minval=1-contrast, maxval=1+contrast)
     images = (images - mean) * contrast_factors + mean
     # Saturation
     gray = jnp.mean(images, axis=1, keepdims=True)
-    sat_factors = random.uniform(k_saturation, (B,1,1,1), minval=1-saturation, maxval=1+saturation)
+    sat_factors = random.uniform(
+        k_saturation, (B, 1, 1, 1), minval=1-saturation, maxval=1+saturation)
     images = gray + (images - gray) * sat_factors
     return images
+
 
 @jit
 def cifar_augment_batch(images, key):
@@ -249,8 +265,11 @@ def cifar_augment_batch(images, key):
     """
     k_pad, k_flip, k_rotate, k_color = random.split(key, 4)
     images = _flip_batch(images, k_flip)
-    images = lax.cond(random.bernoulli(k_pad, 0.5), lambda _: _pad_crop_batch(images, k_pad), lambda _: images, operand=None)
-    images = lax.cond(random.bernoulli(k_rotate, 0.5), lambda _: _rotate_batch(images, k_rotate), lambda _: images, operand=None)
-    images = lax.cond(random.bernoulli(k_color, 0.5), lambda _: _color_jitter_batch(images, k_color), lambda _: images, operand=None)
+    images = lax.cond(random.bernoulli(k_pad, 0.5), lambda _: _pad_crop_batch(
+        images, k_pad), lambda _: images, operand=None)
+    images = lax.cond(random.bernoulli(k_rotate, 0.5), lambda _: _rotate_batch(
+        images, k_rotate), lambda _: images, operand=None)
+    images = lax.cond(random.bernoulli(k_color, 0.5), lambda _: _color_jitter_batch(
+        images, k_color), lambda _: images, operand=None)
     images = (images - _MEAN[None, :, None, None]) / _STD[None, :, None, None]
     return images
