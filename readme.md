@@ -1,221 +1,121 @@
-# Active Continual Learning with Binarized Bayesian Neural Networks
+# Active Continual Learning with Metaplastic Binary Bayesian Neural Networks
 
-This repository contains the code used for the experiments in **Active Continual Learning with Binarized Bayesian Neural Networks**. It provides a unified framework to train, evaluate, and analyze Bayesian binarized models under continual learning settings, with a strong focus on uncertainty estimation and out-of-distribution (OOD) detection.
+**ICML 2026** (poster, Seoul) · [OpenReview](https://openreview.net/forum?id=SPZd0HVyiS)
 
-Main contributors:
+Kellian Cottart, Théo Ballet, Djohan Bonnet, Damien Querlioz — Université Paris-Saclay, CNRS, C2N.
 
-- [Kellian COTTART](https://scholar.google.com/citations?hl=en&user=Akg-AH4AAAAJ)
-- [Théo BALLET](https://scholar.google.com/citations?user=WWfZoQcAAAAJ&hl=en)
-- [Djohan BONNET](https://scholar.google.com/citations?user=1cSwOPIAAAAJ&hl=en)
-  
-Research director:
-- [Damien QUERLIOZ](https://scholar.google.com/citations?user=2-EKdW4AAAAJ&hl=en)
+This repository is the code behind the paper. It trains and evaluates **BiMU** (Binary Metaplasticity from
+Synaptic Uncertainty), a Bayesian continual-learning rule for networks whose weights are single bits, and the
+**active continual learning** setting in which the network decides from its own predictive uncertainty which
+samples are worth labelling.
 
-## Table of contents
+## The idea in one paragraph
 
-- [Active Continual Learning with Binarized Bayesian Neural Networks](#active-continual-learning-with-binarized-bayesian-neural-networks)
-  - [Table of contents](#table-of-contents)
-  - [Environment Setup](#environment-setup)
-  - [Project Structure](#project-structure)
-  - [Main Training File (`main.py`)](#main-training-file-mainpy)
-    - [Command-line Arguments](#command-line-arguments)
-    - [Example Usage](#example-usage)
-  - [Reproducing Figures and Tables](#reproducing-figures-and-tables)
-    - [Main Paper Results](#main-paper-results)
-    - [Appendix Experiments](#appendix-experiments)
-  - [Notes](#notes)
-  - [Citation](#citation)
-  - [License](#license)
+A binary weight is a Bernoulli variable. Training a Bayesian binary network means updating the probability that
+each weight is +1, and that probability doubles as a measure of how sure the network is about that weight. BiMU
+turns this into a learning rule: the further a weight is from certain, the more it is allowed to move, so the
+network keeps learning where it is uncertain and protects what it already knows without task boundaries or
+replay. It is the binary counterpart of MESU ([Bonnet, Cottart et al., Nature Communications 2025](https://github.com/kellian-cottart/mesu-pmnist)),
+derived here for discrete weights so that latent parameters never saturate. The same uncertainty, read at the
+output through the variation ratio, drives the active-learning trigger: only samples the network is unsure about
+are queried, under a labelling budget (see [activelearning.md](activelearning.md) for the dynamic threshold).
 
-## Environment Setup
+## What is in the repository
 
-The repository uses a Conda environment (environment.yml). Key dependencies:
+| Component | Where | Notes |
+| --- | --- | --- |
+| Training and evaluation | `main.py` | One entry point, driven by JSON configurations |
+| Optimizers | `optimizers/` | `bimu.py` (ours), `bayesbinn.py`, `bayesbinn_al.py`, `mesu.py`, `bgd.py`, `synapticMetaplasticity.py`, `adam.py` (STE), `sgd.py`; EWC and SI are regularisers in the training loop, selected by configuration |
+| Models | `models/` | Binary Bayesian MLP and CNN |
+| Layers and activations | `customLayers/` | Bayesian binary linear and convolution layers, binary activations (`reversebinarygate`, ...) |
+| Datasets | `utils/gpuLoading.py` | Permuted MNIST, Animals, OpenLORIS; downloaded on first use |
+| Active learning | `utils/activeLearningFunctions.py`, `utils/uncertaintyFunctions.py` | Variation ratio, budget-controlled threshold |
+| Hyperparameter search | `hyperparameters.py`, `hpo-configurations/` | Optuna |
+| Reproduction scripts | `scripts/` | One script per table or figure |
+| Notebooks | `main-*.ipynb`, `appendix-*.ipynb` | Turn the exported results into the paper's figures and tables |
+| Microcontroller-style inference | `appendix-cpp-code-benchmark/` | Trained Bayesian binary MLP re-implemented in plain C++, validated against JAX golden vectors, timed with `make run` |
 
-- Conda channels: nvidia, defaults
-- Conda packages:
-    - python=3.12
-    - matplotlib
-    - pip
+The code is JAX / Equinox. PyTorch is used for data loading and seeding only.
 
-- Pip packages (installed via pip: section in environment.yml):
-    - --extra-index-url https://download.pytorch.org/whl/cu128
-    - torch==2.9.1+cu128
-    - torchvision
-    - idx2numpy
-    - tqdm
-    - jax[cuda12]
-    - jaxlib
-    - equinox
-    - optax
-    - seaborn
-    - gdown
-    - datasets
+## Setup
 
-You can recreate the environment with:
 ```bash
 conda env create -f environment.yml
 conda activate binarized
 ```
 
-## Project Structure
+The environment pins Python 3.12, `torch==2.9.1+cu128`, `jax[cuda12]`, `equinox`, `optax`. A GPU is strongly
+recommended: the Permuted MNIST table alone trains 1000 sequential tasks per run.
 
-The project is organized around a single **main file**, a set of **configurations**, and a collection of **scripts** used to reproduce all figures and appendix results.
-
-```text
-active-continual-learning-bayesianbinn/
-│
-├── configurations/          # JSON configuration files (models, datasets, optimizers)
-├── customLayers/            # Custom neural network layers, activations
-├── datasets/                # Dataset loaders and utilities
-├── figures-*/               # Output figures (main paper & appendix)
-├── models/                  # Model definitions
-├── optimizers/              # Optimizers and regularization methods (EWC, SI, etc.)
-├── results-*/               # Serialized experiment results
-├── scripts/                 # Bash scripts to reproduce figures and tables
-├── utils/                   # Utility functions
-│
-├── main.py                  # Main training & evaluation entry point
-├── environment.yml          # Conda environment specification
-└── README.md                # This file
-```
-
-## Main Training File (`main.py`)
-
-The core of the project is the `main.py` file.
-
-* Loading configurations
-* Initializing datasets, models, and optimizers
-* Running the continual learning training loop
-* Exporting accuracies and uncertainty metrics
-
-### Command-line Arguments
-
-```text
--c, --config
-    Configuration file name (without .json)
-
--it, --n_iterations
-    Number of times to run the configuration
-
--v, --verbose
-    Display progress bar and intermediate metrics
-
--ood, --ood
-    Dataset for OOD detection: {fashion, pmnist, None}
-
--gpu, --gpu
-    GPU ID to use
-
--wh, --weight_histogram
-    Save weight histograms during training
-
--eln, --extract_layer_norm
-    Extract layer normalization outputs
-
--fits, --fits_in_memory
-    Whether the dataset fits in memory
-
--train, --train_accuracy
-    Display training accuracy (requires --verbose)
-
--euf, --extract_uncertainties_full
-    Extract epistemic uncertainty histograms per epoch
-
--pca, --per_class_acc
-    Compute per-class accuracy
-```
-
-### Example Usage
+## Running an experiment
 
 ```bash
-python main.py \
-    --config main-pmnist-1000tasks-100neurons/bimu \
-    --n_iterations 5 \
-    --ood fashion \
-    --gpu 0 \
-    --verbose
+python main.py --config main-pmnist-1000tasks-100neurons/bimu --n_iterations 5 --ood fashion --gpu 0 --verbose
 ```
 
----
+`--config` names a file under `configurations/` without the `.json` extension. Each configuration fixes the
+network, the optimizer and its hyperparameters, the task, the number of tasks and epochs, and the number of
+Monte-Carlo samples used at train and test time. Results are written under `results/`.
 
-## Reproducing Figures and Tables
+| Argument | Meaning |
+| --- | --- |
+| `-c, --config` | configuration file, relative to `configurations/`, without `.json` |
+| `-it, --n_iterations` | number of independent runs (seeds) |
+| `-ood, --ood` | dataset for out-of-distribution detection: `fashion`, `pmnist`, or none |
+| `-gpu, --gpu` | GPU id |
+| `-v, --verbose` | progress bar and intermediate metrics |
+| `-train, --train_accuracy` | also report training accuracy (needs `-v`) |
+| `-fits, --fits_in_memory` | keep the dataset on the GPU |
+| `-wh, --weight_histogram` | save weight histograms during training |
+| `-euf, --extract_uncertainties_full` | epistemic-uncertainty histograms on the train set at every epoch |
+| `-eln, --extract_layer_norm` | export layer-norm outputs |
+| `-pca, --per_class_acc` | per-class accuracy |
 
-All figures and tables from the paper and appendix can be reproduced using the scripts in the `scripts/` folder. Then, use the corresponding Jupyter notebooks noted _appendix_ or _main_ to generate the plots and tables.
+## Reproducing the paper
 
-### Main Paper Results
+Each script below launches the `main.py` runs for one table or figure and stores the results. The matching
+notebook (`main-*` for the paper, `appendix-*` for the appendix) then produces the plot or table.
 
-* **Permuted MNIST dataset**
+### Main results
 
-  ```bash
-  bash scripts/main-pmnist-table.sh
-  ```
+| Result | Script | Notebook |
+| --- | --- | --- |
+| Permuted MNIST, 1000 tasks | `bash scripts/main-pmnist-table.sh` | `main-permuted-1000tasks-100neurons.ipynb` |
+| Animals, active learning | `bash scripts/main-animals-al.sh` | `main-animals-al-comparison.ipynb` |
+| OpenLORIS, active learning | `bash scripts/main-openloris-al.sh` | `main-openloris-al-comparison.ipynb` |
+| OpenLORIS, table | `bash scripts/main-openloris-table.sh` | `main-openloris.ipynb` |
 
-* **Animals dataset**
+### Appendix
 
-  ```bash
-  bash scripts/main-animals-al.sh
-  ```
+| Result | Script | Notebook |
+| --- | --- | --- |
+| Permuted MNIST, memory window N | `bash scripts/appendix-pmnist-table-N.sh` | `appendix-permuted-N.ipynb` |
+| Permuted MNIST, activation functions | `bash scripts/appendix-pmnist-table-activation.sh` | `appendix-permuted-activation.ipynb`, `appendix-permuted-activation-1task.ipynb` |
+| Permuted MNIST, model size | `bash scripts/appendix-pmnist-table-size.sh` | `appendix-permuted-1000tasks-2000neurons.ipynb` |
+| OpenLORIS, standardized evaluation | `bash scripts/appendix-openloris-standardized-table.sh` | `appendix-openloris-standardized.ipynb` |
+| OpenLORIS, variation-ratio samples | `bash scripts/appendix-openloris-al-variation-ratio.sh` | `appendix-openloris-al-variation-ratio.ipynb` |
+| OpenLORIS, dynamic threshold and budget | `bash scripts/appendix-openloris-al-variation-threshold.sh` | `appendix-openloris-al-variation-budget.ipynb`, `appendix-openloris-al-switch-time.ipynb`, `appendix-openloris-al-backwards.ipynb` |
+| Wall-clock time | (from the main runs) | `appendix-wall-clock-time-bimu.ipynb` |
+| C++ inference benchmark | `cd appendix-cpp-code-benchmark && make run` | — |
 
-* **OpenLORIS dataset**
-
-  ```bash
-  bash scripts/main-openloris-al.sh
-  bash scripts/main-openloris-table.sh
-  ```
-
-### Appendix Experiments
-
-* **Permuted MNIST – Memory window N**
-
-  ```bash
-  bash scripts/appendix-pmnist-table-N.sh
-  ```
-
-* **Permuted MNIST – Activation functions**
-
-  ```bash
-  bash scripts/appendix-pmnist-table-activation.sh
-  ```
-
-* **Permuted MNIST – Model size**
-
-  ```bash
-  bash scripts/appendix-pmnist-table-size.sh
-  ```
-
-* **OpenLORIS – Standardized evaluation**
-
-  ```bash
-  bash scripts/appendix-openloris-standardized-table.sh
-  ```
-
-* **OpenLORIS – Variation ratio samples**
-
-  ```bash
-  bash scripts/appendix-openloris-al-variation-ratio.sh
-  ```
-
-* **OpenLORIS – Variation ratio dynamic threshold**
-
-  ```bash
-  bash scripts/appendix-openloris-al-variation-threshold.sh
-  ```
-
-Each script launches a sequence of `main.py` runs with the appropriate configuration files and automatically stores the results.
-
-## Notes
-
-* Experiments can be computationally expensive; GPU usage is recommended.
-* Interrupting training safely cleans up partial results.
-
+Interrupting a run cleans up its partial results.
 
 ## Citation
 
-Please reference this work as
-
 ```bibtex
+@inproceedings{cottart2026active,
+  title     = {Active Continual Learning with Metaplastic Binary Bayesian Neural Networks},
+  author    = {Cottart, Kellian and Ballet, Th{\'e}o and Bonnet, Djohan and Querlioz, Damien},
+  booktitle = {Proceedings of the 43rd International Conference on Machine Learning (ICML)},
+  year      = {2026},
+  url       = {https://openreview.net/forum?id=SPZd0HVyiS}
+}
 ```
+
+The continuous-weight rule this work specialises is
+[Bayesian continual learning and forgetting in neural networks](https://doi.org/10.1038/s41467-025-64601-w),
+Nature Communications 16, 9614 (2025).
 
 ## License
 
-This project is licensed under the CC-BY 4.0 License - see the [LICENSE](LICENSE) file for details.
+CC-BY 4.0, see [LICENSE](LICENSE). Portions of the data-loading code are adapted from PyTorch (BSD-3-Clause).
