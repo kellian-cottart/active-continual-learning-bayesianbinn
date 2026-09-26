@@ -1,11 +1,11 @@
 # Active Continual Learning with Metaplastic Binary Bayesian Neural Networks
 
-**ICML 2026** (poster, Seoul) · [OpenReview](https://openreview.net/forum?id=SPZd0HVyiS)
+**ICML 2026** (poster, Seoul) · [arXiv:2605.30198](https://arxiv.org/abs/2605.30198) · [OpenReview](https://openreview.net/forum?id=SPZd0HVyiS) · [ICML page](https://icml.cc/virtual/2026/poster/63936) · [Project page](https://kellian-cottart.github.io/publication/2026-bimu)
 
 Kellian Cottart, Théo Ballet, Djohan Bonnet, Damien Querlioz — Université Paris-Saclay, CNRS, C2N.
 
 This repository is the code behind the paper. It trains and evaluates **BiMU** (Binary Metaplasticity from
-Synaptic Uncertainty), a Bayesian continual-learning rule for networks whose weights are single bits, and the
+Uncertainty), a Bayesian continual-learning rule for networks whose weights are single bits, and the
 **active continual learning** setting in which the network decides from its own predictive uncertainty which
 samples are worth labelling.
 
@@ -102,12 +102,18 @@ Interrupting a run cleans up its partial results.
 
 ## Citation
 
+GitHub's "Cite this repository" button (from [CITATION.cff](CITATION.cff)) gives the same entry in other formats.
+
 ```bibtex
 @inproceedings{cottart2026active,
   title     = {Active Continual Learning with Metaplastic Binary Bayesian Neural Networks},
   author    = {Cottart, Kellian and Ballet, Th{\'e}o and Bonnet, Djohan and Querlioz, Damien},
   booktitle = {Proceedings of the 43rd International Conference on Machine Learning (ICML)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {306},
   year      = {2026},
+  eprint    = {2605.30198},
+  archivePrefix = {arXiv},
   url       = {https://openreview.net/forum?id=SPZd0HVyiS}
 }
 ```

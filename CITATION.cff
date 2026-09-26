@@ -1,0 +1,62 @@
+cff-version: 1.2.0
+message: "If you use BiMU or this code, please cite the ICML 2026 paper below."
+title: "BiMU: Active Continual Learning with Metaplastic Binary Bayesian Neural Networks (code)"
+type: software
+authors:
+  - family-names: Cottart
+    given-names: Kellian
+    orcid: "https://orcid.org/0009-0002-1431-6105"
+    affiliation: "Université Paris-Saclay, CNRS, C2N"
+  - family-names: Ballet
+    given-names: Théo
+    affiliation: "Université Paris-Saclay, CNRS, C2N"
+  - family-names: Bonnet
+    given-names: Djohan
+    affiliation: "Université Paris-Saclay, CNRS, C2N"
+  - family-names: Querlioz
+    given-names: Damien
+    affiliation: "Université Paris-Saclay, CNRS, C2N"
+repository-code: "https://github.com/kellian-cottart/active-continual-learning-bayesianbinn"
+url: "https://kellian-cottart.github.io/publication/2026-bimu"
+license: CC-BY-4.0
+keywords:
+  - binary neural networks
+  - Bayesian neural networks
+  - continual learning
+  - active learning
+  - metaplasticity
+  - uncertainty quantification
+  - edge AI
+  - JAX
+abstract: >-
+  BiMU (Binary Metaplasticity from Uncertainty) is a Bayesian continual-learning
+  rule for binary neural networks. It prevents mean-field Bernoulli posteriors from
+  saturating on long non-stationary streams, which keeps epistemic uncertainty informative
+  and enables fully online, buffer-free active querying via Monte Carlo disagreement.
+preferred-citation:
+  type: conference-paper
+  title: "Active Continual Learning with Metaplastic Binary Bayesian Neural Networks"
+  authors:
+    - family-names: Cottart
+      given-names: Kellian
+      orcid: "https://orcid.org/0009-0002-1431-6105"
+    - family-names: Ballet
+      given-names: Théo
+    - family-names: Bonnet
+      given-names: Djohan
+    - family-names: Querlioz
+      given-names: Damien
+  collection-title: "Proceedings of the 43rd International Conference on Machine Learning"
+  conference:
+    name: "International Conference on Machine Learning (ICML 2026)"
+    city: Seoul
+    country: KR
+  publisher:
+    name: PMLR
+  volume: 306
+  year: 2026
+  identifiers:
+    - type: other
+      value: "arXiv:2605.30198"
+      description: arXiv preprint
+  url: "https://arxiv.org/abs/2605.30198"

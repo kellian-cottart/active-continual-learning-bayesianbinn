@@ -24,7 +24,7 @@ def bimu(
     N: int = 60000,
 ) -> optax.GradientTransformation:
     """
-    Optax gradient transformation for Binary Metaplasticity for Uncertainty (BiMU).
+    Optax gradient transformation for Binary Metaplasticity from Uncertainty (BiMU).
 
     Args:
         lr (float): The multiplying factor scaling the update for increased convergence.
@@ -33,7 +33,7 @@ def bimu(
         N (int): The memory window factor.
 
     Returns:
-        optax.GradientTransformation: The BHU update rule.
+        optax.GradientTransformation: The BiMU update rule.
     """
     def init(params):
         return {'step': 0, 'seen': 0}
