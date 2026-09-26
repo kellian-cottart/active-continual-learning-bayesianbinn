@@ -41,7 +41,7 @@ The code is JAX / Equinox. PyTorch is used for data loading and seeding only.
 
 ```bash
 conda env create -f environment.yml
-conda activate binarized
+conda activate aclbbnn
 ```
 
 The environment pins Python 3.12, `torch==2.9.1+cu128`, `jax[cuda12]`, `equinox`, `optax`. A GPU is strongly
